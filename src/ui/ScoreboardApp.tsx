@@ -10,6 +10,7 @@ import { Header, type HeaderActions } from "./Header";
 import { Projects, ProjectNotesNeedingFix, type OpenNoteHandler } from "./Projects";
 import { buildProjectsModel, type ProjectNote } from "../core/projects";
 import { exportButtonCopy, reviewWeekFor } from "../core/report";
+import { coachingButtonTitle } from "../core/coachingMessage";
 
 export interface ScoreboardAppProps extends HeaderActions {
   /** Today in the config timezone (computed at the edge with calendarDateIn). */
@@ -32,6 +33,7 @@ export function ScoreboardApp({
   onRefresh,
   onEnterValues,
   onExport,
+  onStartCoaching,
   projectNotes,
   onOpenNote,
 }: ScoreboardAppProps) {
@@ -61,6 +63,8 @@ export function ScoreboardApp({
         onExport={onExport}
         exportCopy={exportButtonCopy(reviewWeekFor(today))}
         exportBlockedReason={validation.blockedReason}
+        onStartCoaching={state.config ? onStartCoaching : undefined}
+        coachingTitle={coachingButtonTitle(reviewWeekFor(today))}
       />
       <ProjectNotesNeedingFix notes={projects?.malformed ?? []} onOpenNote={onOpenNote} />
       <ConfigBanner validation={validation} dataError={state.dataError} />

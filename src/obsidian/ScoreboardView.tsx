@@ -1,4 +1,4 @@
-import { ItemView, type WorkspaceLeaf } from "obsidian";
+import { ItemView, Notice, type WorkspaceLeaf } from "obsidian";
 import { render } from "preact";
 import { createTrackerAdapter } from "../adapters/trackerAdapter";
 import { DEFAULT_TIMEZONE } from "../core/config";
@@ -9,6 +9,7 @@ import { SCOREBOARD_ICON, VIEW_TYPE_SCOREBOARD } from "./constants";
 import { DataFileRepository } from "./DataFileRepository";
 import { EnterValuesModal } from "./EnterValuesModal";
 import { exportReviewWeek } from "./exportReviewWeek";
+import { coachingNotices, startCoachingChat } from "./startCoachingChat";
 import { processPlanNote, showExportNotice } from "./planNote";
 import { obsidianHttpGet } from "./http";
 import type ScoreboardPlugin from "./main";
@@ -27,6 +28,7 @@ export class ScoreboardView extends ItemView {
   private unsubscribe: (() => void) | null = null;
   private projects: ProjectsStore | null = null;
   private exporting = false;
+  private coaching = false;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -117,6 +119,42 @@ export class ScoreboardView extends ItemView {
     }
   }
 
+  /**
+   * Start coaching chat: refreshes first (like Export), then copies the
+   * review week's context message and opens the saved coaching chat
+   * (startCoachingChat), and shows the notices. Clicks while one runs are ignored.
+   */
+  async startCoaching(): Promise<void> {
+    const store = this.store;
+    const projects = this.projects;
+    if (!store || !projects || this.coaching) return;
+    this.coaching = true;
+    try {
+      await this.reload();
+      const state = store.getState();
+      const notes = projects.getState().notes;
+      const outcome = await startCoachingChat({
+        state,
+        projects: notes ? buildProjectsModel(notes, state.config?.goals ?? null).active : null,
+        now: new Date(),
+        chatUrl: this.plugin.settings.coachingChatUrl,
+        promptTemplate: this.plugin.settings.coachingPromptTemplate,
+        copyText: async (text) => {
+          if (!navigator.clipboard) throw new Error("the clipboard isn't available");
+          await navigator.clipboard.writeText(text);
+        },
+        // Obsidian opens external URLs from window.open in the system browser (desktop) or in-app browser (mobile).
+        openUrl: (url) => {
+          window.open(url, "_blank");
+        },
+      });
+      const notices = coachingNotices(outcome);
+      for (const text of notices) new Notice(text, notices.length > 1 || !outcome.ok ? 10_000 : 5_000);
+    } finally {
+      this.coaching = false;
+    }
+  }
+
   /** Re-renders the Preact tree with the current state. */
   renderApp(): void {
     const store = this.store;
@@ -131,6 +169,7 @@ export class ScoreboardView extends ItemView {
         onRefresh={() => void this.reload()}
         onEnterValues={() => new EnterValuesModal(this.app, store).open()}
         onExport={() => void this.exportToNote()}
+        onStartCoaching={() => void this.startCoaching()}
         projectNotes={this.projects?.getState().notes ?? null}
         onOpenNote={(path, evt) => openProjectNote(this.app, path, evt)}
       />,

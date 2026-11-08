@@ -7,7 +7,8 @@ export interface HeaderActions {
   onEnterValues?: () => void;
   /** Export to Obsidian (ticket 09). */
   onExport?: () => void;
-  // Later: onStartCoaching (ticket 10).
+  /** Start coaching chat (ticket 10). */
+  onStartCoaching?: () => void;
 }
 
 export interface HeaderProps extends HeaderActions {
@@ -27,12 +28,14 @@ export interface HeaderProps extends HeaderActions {
   exportCopy?: { label: string; title: string };
   /** Why export is blocked (invalid config, …); shown as the tooltip. Clicking still explains in a notice. */
   exportBlockedReason?: string | null;
+  /** Start coaching chat tooltip (which week it covers). */
+  coachingTitle?: string;
 }
 
 /**
  * Scoreboard header: title, "Week N of 52", score tiles and action buttons.
  * Also the last-refreshed time and any failing source (ticket 07).
- * Export to Obsidian (ticket 09); later Start coaching chat (10).
+ * Export to Obsidian (ticket 09) and Start coaching chat (ticket 10).
  */
 export function Header({
   week,
@@ -46,6 +49,8 @@ export function Header({
   onExport,
   exportCopy,
   exportBlockedReason,
+  onStartCoaching,
+  coachingTitle,
 }: HeaderProps) {
   const refreshed = refreshedAt && timeZone ? formatInstant(refreshedAt, timeZone) : null;
   return (
@@ -84,6 +89,11 @@ export function Header({
             onClick={onExport}
           >
             {exportCopy?.label ?? "Export to Obsidian"}
+          </button>
+        )}
+        {onStartCoaching && (
+          <button type="button" class="scoreboard-header__coaching" title={coachingTitle} onClick={onStartCoaching}>
+            Start coaching chat
           </button>
         )}
       </div>

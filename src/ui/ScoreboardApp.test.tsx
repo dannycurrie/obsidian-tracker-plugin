@@ -180,4 +180,13 @@ describe("ScoreboardApp: year metrics", () => {
     expect(invalid).toContain('aria-disabled="true"');
     expect(invalid).toContain("Export is blocked: The config file has a problem");
   });
+
+  it("shows Start coaching chat next to Export once there is a config, with the review week as tooltip", () => {
+    const html = render(<ScoreboardApp today={today} state={readyState()} onExport={() => {}} onStartCoaching={() => {}} />);
+    expect(html).toContain(">Start coaching chat<");
+    expect(html).toMatch(/title="Copy week 18(&#39;|')s scoreboard and open the coaching chat"/);
+    expect(html.indexOf(">Export to Obsidian<")).toBeLessThan(html.indexOf(">Start coaching chat<"));
+    const noConfig = render(<ScoreboardApp today={today} state={readyState({ config: null })} onStartCoaching={() => {}} />);
+    expect(noConfig).not.toContain("Start coaching chat");
+  });
 });

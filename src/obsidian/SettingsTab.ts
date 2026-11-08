@@ -24,11 +24,11 @@ const SPECS: TextSettingSpec[] = [
     desc: "Bearer key for the tracker Metrics API. Stored in this plugin's data.json, which sits in the vault folder and may sync.",
     secret: true,
   },
-  { key: "coachingChatUrl", name: "Coaching chat URL", desc: "Link to your ongoing coaching chat on claude.ai." },
+  { key: "coachingChatUrl", name: "Coaching chat URL", desc: "Full link (https://claude.ai/chat/…) to your ongoing coaching chat in the 2027 Planning project. Start coaching chat opens it; while empty it opens the claude.ai projects page instead." },
   {
     key: "coachingPromptTemplate",
     name: "Coaching prompt template",
-    desc: "Last line of the coaching context message.",
+    desc: "Last line of the coaching context message. Leave empty to use the default.",
     multiline: true,
   },
 ];
