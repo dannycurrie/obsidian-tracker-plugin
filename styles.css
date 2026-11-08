@@ -1,0 +1,40 @@
+/* 2027 Scoreboard. Uses Obsidian theme variables so light and dark themes work. */
+
+.scoreboard-view {
+  padding: 0;
+}
+
+.scoreboard {
+  box-sizing: border-box;
+  max-width: 1440px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.scoreboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.scoreboard-header__title {
+  margin: 0;
+  font-size: var(--font-ui-large, 1.25em);
+  font-weight: 600;
+}
+
+.scoreboard-header__week {
+  color: var(--text-muted);
+  font-size: var(--font-ui-medium, 1em);
+}
+
+.scoreboard-empty {
+  color: var(--text-muted);
+  margin: 0;
+}

@@ -1,0 +1,9 @@
+{
+  "id": "weekly-scoreboard",
+  "name": "2027 Scoreboard",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Shows whether you are winning this week and on pace for the year across your goals.",
+  "author": "Danny Currie",
+  "isDesktopOnly": false
+}
