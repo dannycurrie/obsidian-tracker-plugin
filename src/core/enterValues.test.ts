@@ -81,6 +81,14 @@ describe("enterValuesPatch", () => {
     });
   });
 
+  it("replaces a year metric's running total rather than adding to it", () => {
+    const later = "2027-05-12T10:00:00.000Z";
+    const { patch } = enterValuesPatch(fields, { eps: "3" }, week, later);
+    const before = { version: 1, manual: dataWithHistory().manual } as Record<string, unknown>;
+    const after = readScoreboardData(applyDataPatch(before, patch).doc);
+    expect(after.manual.latest["eps"]).toEqual({ value: 3, enteredAt: later });
+  });
+
   it("skips values equal to what is stored (an untouched pre-filled year field)", () => {
     const { patch } = enterValuesPatch(fields, { eps: "1", "music-practice": "20" }, week, at);
     expect(patch).toEqual([]);

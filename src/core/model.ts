@@ -7,10 +7,11 @@ import type { ScoreboardData } from "./data";
 import { buildUntargetedRow } from "./rows/untargetedRow";
 import { buildWeeklyRow } from "./rows/weeklyRow";
 import { buildYearRow } from "./rows/yearRow";
-import type { MetricRowModel, RowContext, WeeklyRowModel } from "./rows/types";
+import type { MetricRowModel, RowContext, WeeklyRowModel, YearRowModel } from "./rows/types";
 import type { Score } from "./score";
 import { isoWeekKey, isoWeekOf, type CalendarDate, type IsoWeek } from "./week";
 import { thisWeekScore } from "./weeklyScoring";
+import { yearToDateScore } from "./yearScoring";
 
 export type { MetricRowModel, RowContext, UntargetedRowModel, WeeklyRowModel, YearRowModel } from "./rows/types";
 
@@ -26,7 +27,8 @@ export interface ScoreboardModel {
   goals: GoalCardModel[];
   /** Header "This week" tile. */
   thisWeek: Score;
-  // Ticket 03: yearToDate: Score.
+  /** Header "Year to date" tile. */
+  yearToDate: Score;
 }
 
 /** Builds one metric's row, by kind. */
@@ -50,5 +52,12 @@ export function buildScoreboardModel(
   const ctx: RowContext = { config, data, today, week, weekKey: isoWeekKey(week) };
   const goals = config.goals.map((goal) => ({ goal, rows: goal.metrics.map((m) => buildMetricRow(m, ctx)) }));
   const weeklyRows = goals.flatMap((g) => g.rows).filter((r): r is WeeklyRowModel => r.kind === "weekly");
-  return { today, week, goals, thisWeek: thisWeekScore(weeklyRows.map((r) => r.status)) };
+  const yearRows = goals.flatMap((g) => g.rows).filter((r): r is YearRowModel => r.kind === "year");
+  return {
+    today,
+    week,
+    goals,
+    thisWeek: thisWeekScore(weeklyRows.map((r) => r.status)),
+    yearToDate: yearToDateScore(yearRows.map((r) => r.status)),
+  };
 }

@@ -5,6 +5,7 @@
 import { formatValue, formatValueOverTarget, NO_VALUE, valueSourceTitle } from "../core/format";
 import type { MetricRowModel, UntargetedRowModel, WeeklyRowModel, YearRowModel } from "../core/model";
 import { weeklyStatusLabel } from "../core/weeklyScoring";
+import { updatedWeeksAgoLabel, yearStatusLabel } from "../core/yearScoring";
 
 export function MetricRow({ row, timeZone }: { row: MetricRowModel; timeZone: string }) {
   switch (row.kind) {
@@ -48,14 +49,36 @@ export function WeeklyMetricRow({ row, timeZone }: RowProps<WeeklyRowModel>) {
   );
 }
 
-/** PLACEHOLDER for ticket 03: value / target only. */
+/** Status colour class for a year row: blue ahead / on pace, orange behind. */
+function yearStatusClass(row: YearRowModel): string {
+  return row.status.onPace ? "is-on-track" : "is-behind";
+}
+
+const percent = (f: number) => `${Math.round(f * 1000) / 10}%`;
+
 export function YearMetricRow({ row, timeZone }: RowProps<YearRowModel>) {
-  const { metric, value } = row;
+  const { metric, value, status, planValue, progress, planTick, updatedWeeksAgo } = row;
+  const planText = `Plan today: ${formatValue(Math.round(planValue * 10) / 10, metric.unit)}`;
   return (
-    <li class="scoreboard-metric scoreboard-metric--year is-neutral" data-metric-id={metric.id}>
+    <li class={`scoreboard-metric scoreboard-metric--year ${yearStatusClass(row)}`} data-metric-id={metric.id}>
       <div class="scoreboard-metric__label">{metric.label}</div>
       <div class="scoreboard-metric__value" title={value ? valueSourceTitle(value, timeZone) : "No value yet"}>
         {formatValueOverTarget(value?.value ?? null, metric.target, metric.unit)}
+      </div>
+      <div
+        class="scoreboard-progress"
+        role="img"
+        aria-label={`${percent(progress)} of target; ${planText}`}
+        title={planText}
+      >
+        <div class="scoreboard-progress__fill" style={{ width: percent(progress) }} />
+        <div class="scoreboard-progress__plan-tick" style={{ left: percent(planTick) }} />
+      </div>
+      <div class="scoreboard-metric__status">
+        {yearStatusLabel(status, metric.unit)}
+        {updatedWeeksAgo !== null && (
+          <span class="scoreboard-metric__age"> · {updatedWeeksAgoLabel(updatedWeeksAgo)}</span>
+        )}
       </div>
     </li>
   );

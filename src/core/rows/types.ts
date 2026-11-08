@@ -8,6 +8,7 @@ import type { ScoreboardData } from "../data";
 import type { MetricValue } from "../values";
 import type { CalendarDate, IsoWeek } from "../week";
 import type { WeeklyStatus } from "../weeklyScoring";
+import type { YearStatus } from "../yearScoring";
 
 /** Everything a row builder may read. `today` comes from the edge (calendarDateIn). */
 export interface RowContext {
@@ -31,12 +32,23 @@ export interface WeeklyRowModel {
   // Ticket 04: history strip (last 8 completed weeks) and streak go here.
 }
 
-/** PLACEHOLDER for ticket 03 (plan curve, pace delta, pace label, staleness). */
 export interface YearRowModel {
   kind: "year";
   metric: YearMetricConfig;
   /** Latest value (2027 running total or reading); null = no data yet. */
   value: MetricValue | null;
+  /** The plan curve's value today. */
+  planValue: number;
+  /** Pace tolerance applied (per-metric override or global). */
+  paceTolerance: number;
+  /** On pace / ahead / behind, with the pace delta. */
+  status: YearStatus;
+  /** Progress bar fill: value / target, clamped to 0–1. */
+  progress: number;
+  /** Plan tick position: plan value today / target, clamped to 0–1. */
+  planTick: number;
+  /** Weeks since a manual value was entered, when it is more than 4 weeks old; else null. */
+  updatedWeeksAgo: number | null;
 }
 
 /** PLACEHOLDER for ticket 05 (4-week change, uncoloured strip). */
