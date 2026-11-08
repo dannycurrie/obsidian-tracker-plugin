@@ -213,7 +213,7 @@ This week: 2/5 weekly targets hit · Year to date: 3/6 on pace · Exported 2027-
 
 | Goal | Metric | Value | Target | Status |
 | --- | --- | --- | --- | --- |
-| Finances | Saved in Vanguard | £4,300 | £12,000 | On pace (+£150) |
+| Finances | Saved in Vanguard | £4,300 | £12,000 | £150 ahead of pace |
 | Self | Meditation | 70 min | 100 min | 30 to go |
 
 **Active projects**
