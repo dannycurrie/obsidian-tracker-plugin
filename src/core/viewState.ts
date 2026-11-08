@@ -13,8 +13,15 @@ export interface ScoreboardState {
   config: ScoreboardConfig | null;
   /** True when `config` passed with no problems. */
   configValid: boolean;
-  /** Problems in the config file as it is now (with line numbers). */
+  /**
+   * Problems in the config file as it is now (with line numbers), followed by
+   * problems source adapters reported at runtime (ticket 07, via
+   * `ScoreboardStore.setSourceProblems`). Read it through
+   * `configValidationState` (core/configStatus.ts).
+   */
   configProblems: ConfigProblem[];
+  /** True when the config file is broken now and `config` is an earlier valid one. */
+  usingLastValidConfig: boolean;
   /** The config file couldn't be read at all (e.g. missing); human-readable. */
   configError: string | null;
   data: ScoreboardData;
@@ -30,6 +37,7 @@ export function initialScoreboardState(): ScoreboardState {
     config: null,
     configValid: false,
     configProblems: [],
+    usingLastValidConfig: false,
     configError: null,
     data: emptyScoreboardData(),
     dataError: null,

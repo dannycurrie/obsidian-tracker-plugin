@@ -9,7 +9,8 @@
  *    It is deliberately lenient (ticket 02): it reports a problem and skips
  *    whatever it cannot use, but never throws. Full validation is ticket 06.
  *
- * `loadConfigFromYaml(text)` runs both and is what the store calls.
+ * `loadConfigFromYaml(text)` runs both. The store uses `validateConfigText`
+ * (configValidation.ts), which adds the stricter rules on top.
  */
 import { isNode, LineCounter, parseDocument } from "yaml";
 import {

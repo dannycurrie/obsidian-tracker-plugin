@@ -1,4 +1,5 @@
 import { DEFAULT_TIMEZONE } from "../core/config";
+import { configValidationState } from "../core/configStatus";
 import { buildScoreboardModel } from "../core/model";
 import { isoWeekOf, type CalendarDate } from "../core/week";
 import type { ScoreboardState } from "../core/viewState";
@@ -43,12 +44,7 @@ export function ScoreboardApp({ today, state, onRefresh, onEnterValues, projectN
         onEnterValues={state.config ? onEnterValues : undefined}
       />
       <ProjectNotesNeedingFix notes={projects?.malformed ?? []} onOpenNote={onOpenNote} />
-      <ConfigBanner
-        error={state.configError}
-        problems={state.configProblems}
-        usingLastValid={state.configValid}
-        dataError={state.dataError}
-      />
+      <ConfigBanner validation={configValidationState(state)} dataError={state.dataError} />
       <GoalCards goals={model?.goals ?? null} timeZone={timeZone} emptyMessage={emptyMessage} />
       <Projects projects={projects} onOpenNote={onOpenNote} />
     </div>
