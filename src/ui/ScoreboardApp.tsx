@@ -5,12 +5,16 @@ import type { ScoreboardState } from "../core/viewState";
 import { ConfigBanner } from "./ConfigBanner";
 import { GoalCards } from "./GoalCards";
 import { Header, type HeaderActions } from "./Header";
-import { Projects } from "./Projects";
+import { Projects, ProjectNotesNeedingFix, type OpenNoteHandler } from "./Projects";
+import { buildProjectsModel, type ProjectNote } from "../core/projects";
 
 export interface ScoreboardAppProps extends HeaderActions {
   /** Today in the config timezone (computed at the edge with calendarDateIn). */
   today: CalendarDate;
   state: ScoreboardState;
+  /** Strategic-project notes (ticket 08); null/omitted until read. */
+  projectNotes?: readonly ProjectNote[] | null;
+  onOpenNote?: OpenNoteHandler;
 }
 
 /**
@@ -19,8 +23,9 @@ export interface ScoreboardAppProps extends HeaderActions {
  * section lives in its own file; add a new section by creating a component
  * and adding one line here.
  */
-export function ScoreboardApp({ today, state, onRefresh, onEnterValues }: ScoreboardAppProps) {
+export function ScoreboardApp({ today, state, onRefresh, onEnterValues, projectNotes, onOpenNote }: ScoreboardAppProps) {
   const model = state.config ? buildScoreboardModel(state.config, state.data, today) : null;
+  const projects = projectNotes ? buildProjectsModel(projectNotes, state.config?.goals ?? null) : null;
   const timeZone = state.config?.timezone ?? DEFAULT_TIMEZONE;
   const emptyMessage =
     state.status === "loading"
@@ -36,6 +41,7 @@ export function ScoreboardApp({ today, state, onRefresh, onEnterValues }: Scoreb
         onRefresh={onRefresh}
         onEnterValues={state.config ? onEnterValues : undefined}
       />
+      <ProjectNotesNeedingFix notes={projects?.malformed ?? []} onOpenNote={onOpenNote} />
       <ConfigBanner
         error={state.configError}
         problems={state.configProblems}
@@ -43,7 +49,7 @@ export function ScoreboardApp({ today, state, onRefresh, onEnterValues }: Scoreb
         dataError={state.dataError}
       />
       <GoalCards goals={model?.goals ?? null} timeZone={timeZone} emptyMessage={emptyMessage} />
-      <Projects />
+      <Projects projects={projects} onOpenNote={onOpenNote} />
     </div>
   );
 }

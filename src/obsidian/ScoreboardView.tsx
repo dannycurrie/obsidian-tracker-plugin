@@ -8,6 +8,8 @@ import { DataFileRepository } from "./DataFileRepository";
 import { EnterValuesModal } from "./EnterValuesModal";
 import type ScoreboardPlugin from "./main";
 import { ScoreboardStore } from "./ScoreboardStore";
+import { openProjectNote, readProjectNotes, watchProjectNotes } from "./projectNotes";
+import { ProjectsStore } from "./ProjectsStore";
 import { vaultTextIO } from "./vaultIO";
 
 /** How often the view re-renders so the week label rolls over at midnight (London). */
@@ -16,6 +18,7 @@ const CLOCK_TICK_MS = 60_000;
 export class ScoreboardView extends ItemView {
   private store: ScoreboardStore | null = null;
   private unsubscribe: (() => void) | null = null;
+  private projects: ProjectsStore | null = null;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -47,6 +50,11 @@ export class ScoreboardView extends ItemView {
     });
     this.store = store;
     this.unsubscribe = store.subscribe(() => this.renderApp());
+    const projects = new ProjectsStore({ readNotes: () => readProjectNotes(this.app, this.plugin.settings.projectsFolder) });
+    this.projects = projects;
+    projects.subscribe(() => this.renderApp());
+    watchProjectNotes(this, this.app, () => this.plugin.settings.projectsFolder, projects);
+    void projects.reload();
     this.renderApp();
     this.registerInterval(window.setInterval(() => this.renderApp(), CLOCK_TICK_MS));
     await store.reload();
@@ -55,12 +63,14 @@ export class ScoreboardView extends ItemView {
   async onClose(): Promise<void> {
     this.unsubscribe?.();
     this.unsubscribe = null;
+    this.projects?.dispose();
+    this.projects = null;
     render(null, this.contentEl);
   }
 
   /** Re-reads config and data (the Refresh button). */
   async reload(): Promise<void> {
-    await this.store?.reload();
+    await Promise.all([this.store?.reload(), this.projects?.reload()]);
   }
 
   /** Re-renders the Preact tree with the current state. */
@@ -74,8 +84,10 @@ export class ScoreboardView extends ItemView {
       <ScoreboardApp
         today={today}
         state={state}
-        onRefresh={() => void store.reload()}
+        onRefresh={() => void this.reload()}
         onEnterValues={() => new EnterValuesModal(this.app, store).open()}
+        projectNotes={this.projects?.getState().notes ?? null}
+        onOpenNote={(path, evt) => openProjectNote(this.app, path, evt)}
       />,
       this.contentEl,
     );
