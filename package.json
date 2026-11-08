@@ -10,7 +10,9 @@
     "build": "tsc --noEmit && node esbuild.config.mjs production",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "preview": "esbuild .scratch/2027-scoreboard/preview/render-preview.tsx --bundle --platform=node --format=cjs --jsx=automatic --jsx-import-source=preact --log-level=warning --outfile=node_modules/.cache/scoreboard-preview.cjs && node node_modules/.cache/scoreboard-preview.cjs",
+    "install:dev-vault": "npm run build && node scripts/install-dev-vault.mjs"
   },
   "license": "MIT",
   "dependencies": {

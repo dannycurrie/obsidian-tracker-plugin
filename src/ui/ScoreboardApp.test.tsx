@@ -8,6 +8,8 @@ import { ScoreboardApp } from "./ScoreboardApp";
 // Wednesday 5 May 2027 is in 2027-W18.
 const today = { year: 2027, month: 5, day: 5 };
 const at = "2027-05-05T10:00:00Z";
+/** Visible text: tags removed (values render as "40<span> / 60 min</span>"). */
+const text = (html: string) => html.replace(/<[^>]*>/g, "");
 
 function readyState(overrides: Partial<ScoreboardState> = {}): ScoreboardState {
   return { ...initialScoreboardState(), status: "ready", config: sampleConfig(), configValid: true, ...overrides };
@@ -29,7 +31,7 @@ describe("ScoreboardApp", () => {
     expect(html).toContain("Creative");
     expect(html).toContain("Put more music out into the world");
     expect(html).toContain("Music practice, playing, recording");
-    expect(html).toContain("– / 60 min");
+    expect(text(html)).toContain("– / 60 min");
     expect(html).toContain("60 to go this week");
   });
 
@@ -38,12 +40,12 @@ describe("ScoreboardApp", () => {
     data.manual.weekly["music-practice"] = { "2027-W18": { value: 40, enteredAt: at } };
     data.manual.weekly["tengu-wau"] = { "2027-W18": { value: 26, enteredAt: at } };
     const html = render(<ScoreboardApp today={today} state={readyState({ data })} onEnterValues={() => {}} />);
-    expect(html).toContain("40 / 60 min");
+    expect(text(html)).toContain("40 / 60 min");
     expect(html).toContain("20 to go this week");
-    expect(html).toContain("26 / 25");
+    expect(text(html)).toContain("26 / 25");
     expect(html).toMatch(/>Hit · streak 1</);
     expect(html).toContain("This week");
-    expect(html).toContain("1/3");
+    expect(text(html)).toContain("1 / 3");
     expect(html).toContain("weekly targets hit");
     expect(html).toContain("Enter values");
     expect(html).toContain('title="Manual entry · 5 May 2027, 11:00"');
@@ -64,8 +66,31 @@ describe("ScoreboardApp", () => {
     expect(html.match(/scoreboard-history__week is-hit/g)).toHaveLength(2);
     expect(html.match(/scoreboard-history__week is-missed/g)).toHaveLength(1);
     expect(html).toContain("Hit · streak 2");
+    // The strip's verdicts in words as well as colour.
+    expect(text(html)).toContain("2/3 hit");
     // No strip for metrics with no data before this week.
     expect(html.match(/class="scoreboard-history"/g)).toHaveLength(1);
+  });
+
+  it("shows the legend in words under the header once there are goals", () => {
+    const html = render(<ScoreboardApp today={today} state={readyState()} />);
+    const legend = html.slice(html.indexOf('class="scoreboard-legend"'), html.indexOf('class="scoreboard-section scoreboard-goals"'));
+    expect(text(legend)).toContain("Where the plan says you should be today");
+    expect(text(legend)).toContain("Week hit");
+    expect(text(legend)).toContain("Week missed");
+    expect(render(<ScoreboardApp today={today} state={initialScoreboardState()} />)).not.toContain("scoreboard-legend");
+  });
+
+  it("labels each row's cadence as in the mockup", () => {
+    const html = render(<ScoreboardApp today={today} state={readyState()} />);
+    const cadence = (id: string) => {
+      const row = html.slice(html.indexOf(`data-metric-id="${id}"`));
+      return row.match(/class="scoreboard-metric__cadence">([^<]*)</)?.[1];
+    };
+    expect(cadence("music-practice")).toBe("This week");
+    expect(cadence("eps")).toBe("Year total");
+    expect(cadence("asl")).toBe("Ramp to Dec");
+    expect(cadence("gigs")).toBe("Trend");
   });
 
   it("says target, never goal, for the number", () => {
@@ -122,9 +147,9 @@ describe("ScoreboardApp", () => {
     data.manual.latest["eps"] = { value: 2, enteredAt: at };
     data.manual.latest["asl"] = { value: 0, enteredAt: at };
     const html = render(<ScoreboardApp today={today} state={readyState({ data })} />);
-    expect(html).toContain('<span class="scoreboard-goal__badge is-on-track">2 / 2 on track</span>'); // creative
-    expect(html).toContain('<span class="scoreboard-goal__badge is-behind">0 / 2 on track</span>'); // career
-    expect(html).toContain('<span class="scoreboard-goal__badge is-neutral">0 / 1 on track</span>'); // self
+    expect(html).toMatch(/<span class="scoreboard-goal__badge is-on-track" title="Every scored metric is on track">2 \/ 2 on track<\/span>/); // creative
+    expect(html).toMatch(/<span class="scoreboard-goal__badge is-behind" title="Nothing on track yet, and at least one metric is behind or missed">0 \/ 2 on track<\/span>/); // career
+    expect(html).toMatch(/<span class="scoreboard-goal__badge is-neutral" title="Some metrics on track, or still in progress this week">0 \/ 1 on track<\/span>/); // self
   });
 
   it("renders an untargeted metric with its value, 4-week change, uncoloured strip and 'no target set'", () => {
@@ -156,15 +181,15 @@ describe("ScoreboardApp: year metrics", () => {
     data.manual.latest["eps"] = { value: 2, enteredAt: at };
     data.manual.latest["asl"] = { value: 20, enteredAt: "2027-03-24T10:00:00Z" };
     const html = render(<ScoreboardApp today={today} state={readyState({ data })} />);
-    expect(html).toContain("2 / 5");
+    expect(text(html)).toContain("2 / 5");
     expect(html).toContain("0.3 ahead of pace");
-    expect(html).toContain("20 / 100%");
+    expect(text(html)).toContain("20 / 100%");
     expect(html).toContain("5.4% behind pace");
     expect(html).toContain("updated 6 wks ago");
     expect(html.match(/updated [0-9]+ wks? ago/g)).toHaveLength(1);
     expect(html).toContain("scoreboard-progress__plan-tick");
     expect(html).toContain("Year to date");
-    expect(html).toContain("1/2");
+    expect(text(html)).toContain("1 / 2");
     expect(html).toContain("year targets on pace");
   });
 

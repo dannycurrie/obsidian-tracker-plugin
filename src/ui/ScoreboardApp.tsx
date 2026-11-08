@@ -7,6 +7,7 @@ import type { ScoreboardState } from "../core/viewState";
 import { ConfigBanner } from "./ConfigBanner";
 import { GoalCards } from "./GoalCards";
 import { Header, type HeaderActions } from "./Header";
+import { Legend } from "./Legend";
 import { Projects, ProjectNotesNeedingFix, type OpenNoteHandler } from "./Projects";
 import { buildProjectsModel, type ProjectNote } from "../core/projects";
 import { exportButtonCopy, reviewWeekFor } from "../core/report";
@@ -68,6 +69,7 @@ export function ScoreboardApp({
       />
       <ProjectNotesNeedingFix notes={projects?.malformed ?? []} onOpenNote={onOpenNote} />
       <ConfigBanner validation={validation} dataError={state.dataError} />
+      {model && model.goals.length > 0 && <Legend />}
       <GoalCards goals={model?.goals ?? null} timeZone={timeZone} emptyMessage={emptyMessage} />
       <Projects projects={projects} onOpenNote={onOpenNote} />
     </div>

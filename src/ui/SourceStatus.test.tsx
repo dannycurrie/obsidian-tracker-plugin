@@ -7,6 +7,7 @@ import { initialScoreboardState, type ScoreboardState } from "../core/viewState"
 import { ScoreboardApp } from "./ScoreboardApp";
 
 const today = { year: 2027, month: 5, day: 5 };
+const text = (html: string) => html.replace(/<[^>]*>/g, "");
 
 function state(overrides: Partial<ScoreboardState>): ScoreboardState {
   const data = emptyScoreboardData();
@@ -31,7 +32,7 @@ describe("tracker values in the view", () => {
     const html = render(
       <ScoreboardApp today={today} state={state({ sources: { tracker: { ok: true, fetchedAt: "2027-05-05T13:00:00.000Z" } } })} />,
     );
-    expect(html).toContain("70 / 100 min");
+    expect(text(html)).toContain("70 / 100 min");
     expect(html).toContain('title="Tracker · fetched 5 May 2027, 14:00"');
     expect(html).toContain("Refreshed 5 May 2027, 14:00");
     expect(html).not.toContain("stale");
@@ -42,7 +43,7 @@ describe("tracker values in the view", () => {
       tracker: { ok: false as const, error: "Tracker API error (HTTP 401): unauthorized", failedAt: "2027-05-05T13:00:00.000Z", lastFetchedAt: null },
     };
     const html = render(<ScoreboardApp today={today} state={state({ sources })} />);
-    expect(html).toContain("70 / 100 min");
+    expect(text(html)).toContain("70 / 100 min");
     expect(html).toContain("stale · 4 h old");
     expect(html).toContain("Tracker · last fetched 5 May 2027, 10:00 · stale: Tracker API error (HTTP 401): unauthorized");
     expect(html).toContain("Tracker: Tracker API error (HTTP 401): unauthorized Showing the last good values, marked stale.");

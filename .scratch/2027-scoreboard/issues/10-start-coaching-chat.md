@@ -28,5 +28,5 @@ Rules:
 ## Manual checks in Obsidian (not yet done)
 
 - [ ] Desktop: click Start coaching chat → the clipboard holds the message (paste into a note), the saved chat opens in the browser, notice "Coaching context copied — paste it into the chat."
-- [ ] Mobile (iOS/Android): same; check `navigator.clipboard.writeText` still works after the refresh's `await` (user-activation may lapse in the mobile WebView; if it fails, the notice says so) and that `window.open` opens the chat (in-app browser or the Claude app).
+- [ ] Mobile (iOS/Android): same; check `navigator.clipboard.writeText` works and that `window.open` opens the chat (in-app browser or the Claude app). (Ticket 11 removed the refresh `await` before the copy: copy and open now run synchronously in the tap, from the current state.)
 - [ ] With the URL setting empty: claude.ai/projects opens and the settings notice shows.

@@ -1,5 +1,18 @@
-# Sample 2027 Scoreboard config for manual testing. Copy it to the config
-# path set in the plugin settings (default: 🗺️ Plans/🎯 2027 Plan/scoreboard.yaml).
+# 2027 Scoreboard config: Danny's real 2027 goals and metrics (product-brief.md,
+# Data model table). Copy it to the config path set in the plugin settings
+# (default: 🗺️ Plans/🎯 2027 Plan/scoreboard.yaml).
+#
+# TODO(Danny): the three tracker `metric` ids below are placeholders
+# ("TODO-tracker-id-…"). Set the Tracker API key in the plugin settings, open
+# the scoreboard and Refresh: the config banner then lists every tracker
+# metric's name and real id. Paste the right id over each placeholder and
+# Refresh again. Until then those three metrics show no values (static
+# validation accepts the placeholders; only the live API rejects them).
+#
+# Open questions (brief › Open questions):
+#   - EPs: linear until release dates are known, then switch to milestones.
+#   - ASL % and React platform %: the quarterly ramp ends at 100%; confirm
+#     that 100% (not 50%) is the year target.
 #
 # Metric fields:
 #   id        stable key for history; don't rename once data exists
@@ -15,6 +28,8 @@
 #   paceTolerance  optional per-metric override of the global value
 #   source    { type: manual, cadence: weekly | ad-hoc }
 #             { type: tracker, metric: "<tracker metric id>", aggregate: sum | count }
+#               sum   = the tracker's period value (minutes for timed metrics, totals for cumulative)
+#               count = number of entries logged
 year: 2027
 weekStart: monday
 timezone: Europe/London
@@ -22,32 +37,33 @@ paceTolerance: 0.95
 goals:
   - id: finances
     name: Finances
-    statement: Build the cushion and shrink the mortgage
+    statement: Strengthen finances after an expensive 2026
     metrics:
+      # Amount paid in during 2027, not the account balance.
       - id: vanguard-saved
         label: Saved in Vanguard
         kind: year
         target: 12000
         unit: "£"
         plan: { type: linear, baseline: 0 }
-        source: { type: manual }
+        source: { type: manual, cadence: ad-hoc }
       - id: mortgage-overpayment
         label: Mortgage overpayment
         kind: year
         target: 10000
         unit: "£"
         plan: { type: linear, baseline: 0 }
-        source: { type: manual }
+        source: { type: manual, cadence: ad-hoc }
   - id: career
     name: Career
-    statement: Ship platforms people actually use
+    statement: Consolidate at Ten while preparing for the next phase
     metrics:
       - id: tengu-wau
         label: Tengu WAU
         kind: weekly
         level: true
         target: 25
-        source: { type: manual }
+        source: { type: manual, cadence: weekly }
       - id: asl-requests
         label: Non-telephony inbound requests serviced by ASL
         kind: year
@@ -55,7 +71,7 @@ goals:
         target: 100
         unit: "%"
         plan: { type: quarterly, baseline: 0, quarters: [10, 50, 80, 100] }
-        source: { type: manual }
+        source: { type: manual, cadence: ad-hoc }
       - id: react-migration
         label: Clients migrated to new React platform
         kind: year
@@ -63,38 +79,44 @@ goals:
         target: 100
         unit: "%"
         plan: { type: quarterly, baseline: 0, quarters: [10, 50, 80, 100] }
-        source: { type: manual }
+        source: { type: manual, cadence: ad-hoc }
   - id: family
     name: Family
-    statement: Be present at home
+    statement: Maintain and develop connection and support in our family
     metrics:
       - id: homework-n
         label: Homework time with N
         kind: weekly
         target: 60
         unit: min
-        source: { type: tracker, metric: "<tracker metric id>", aggregate: sum }
+        # PLACEHOLDER id: replace with the real tracker id (see TODO at the top).
+        source: { type: tracker, metric: "TODO-tracker-id-homework-time-with-n", aggregate: sum }
       - id: time-with-s
         label: "[x] with S"
         kind: year
         target: 12
         plan: { type: linear, baseline: 0 }
-        source: { type: manual }
+        source: { type: manual, cadence: ad-hoc }
   - id: self
     name: Self
-    statement: Look after the engine
+    statement: Operate from strength, not fear, in everything I do
     metrics:
       - id: meditation
         label: Meditation
         kind: weekly
         target: 100
         unit: min
-        source: { type: tracker, metric: "<tracker metric id>", aggregate: sum }
+        # PLACEHOLDER id: replace with the real tracker id (see TODO at the top).
+        source: { type: tracker, metric: "TODO-tracker-id-meditation", aggregate: sum }
       - id: feedback-given
         label: Feedback given
         kind: weekly
         target: 10
-        source: { type: tracker, metric: "<tracker metric id>", aggregate: count }
+        # PLACEHOLDER id: replace with the real tracker id (see TODO at the top).
+        # aggregate: sum counts the logged amounts (right for a cumulative tracker
+        # metric, and the same as count if each entry is logged as 1). Switch to
+        # count if each piece of feedback is one entry with some other value.
+        source: { type: tracker, metric: "TODO-tracker-id-feedback-given", aggregate: sum }
   - id: creative
     name: Creative
     statement: Put more music out into the world
@@ -104,11 +126,10 @@ goals:
         kind: weekly
         target: 60
         unit: min
-        source: { type: manual }
+        source: { type: manual, cadence: weekly }
       - id: eps
         label: EPs released
         kind: year
         target: 5
-        plan: { type: linear }   # switch to milestones once release dates are set
-        paceTolerance: 0.9
-        source: { type: manual }
+        plan: { type: linear, baseline: 0 }   # switch to milestones once release dates are set
+        source: { type: manual, cadence: ad-hoc }

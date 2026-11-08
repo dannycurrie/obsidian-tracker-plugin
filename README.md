@@ -12,7 +12,11 @@ npm run dev        # esbuild watch: rebuilds main.js on change
 npm run build      # typecheck + production bundle to main.js
 npm test           # Vitest, single run (npm run test:watch to watch)
 npm run typecheck  # tsc --noEmit
+npm run preview    # static HTML render of the view (real config, sample data) in .scratch/2027-scoreboard/preview/
+npm run install:dev-vault  # build and install into .scratch/2027-scoreboard/dev-vault (or: node scripts/install-dev-vault.mjs <vault>)
 ```
+
+Manual testing: `.scratch/2027-scoreboard/dev-vault/` is a small vault with the default emoji paths, the real config and sample project notes; `.scratch/2027-scoreboard/ACCEPTANCE.md` lists every acceptance check and its status.
 
 ## Source layout
 
@@ -25,10 +29,10 @@ npm run typecheck  # tsc --noEmit
   - `goalBadge.ts` per-metric on-track verdict (`metricTrackState`) and the goal card's "x / y on track" badge and tone.
   - `enterValues.ts` Enter values form fields and submission → patch; `format.ts` number/unit copy; `week.ts` ISO weeks.
   - `report.ts` the review week report (`reviewWeekFor`, `buildReviewReport`): the single source of the review week, its scores, every metric's value / target / status label, stale flags and active projects, shared by Export (ticket 09) and the coaching message (ticket 10); `exportRecordOf` builds the data file's export record. `coachingMessage.ts` renders the Start coaching chat context message from the report (sections, streak context, and "Changed since last export" against the last export of an earlier week, preferring its frozen snapshot verdicts). `scoreboardEntry.ts` renders the scoreboard entry Markdown and upserts it into the 2027 Plan note text between `scoreboard:YYYY-Www` markers (refuses on malformed markers).
-- `src/ui/` — Preact components. `ScoreboardApp.tsx` composes one component per section (`Header`, `ConfigBanner`, `GoalCards`, `Projects`, …); `MetricRows.tsx` has one row component per kind.
-- `src/obsidian/` — plugin entry (`main.ts`), the `ItemView`, settings tab, Enter values modal, and vault IO. `exportReviewWeek.ts` runs Export to Obsidian (refuse if blocked → compute → write the note → write the data file; Obsidian-free, tested with fakes); `startCoachingChat.ts` runs Start coaching chat (build the message → copy → open the saved chat URL, or the claude.ai projects page if none / not http(s); clipboard and `window.open` injected, tested with fakes; `coachingNotices` gives the notices). `planNote.ts` writes the 2027 Plan note with `vault.process` and shows the export notices. `ScoreboardStore` (view state, `reload()`, `updateData(patch)`) and `DataFileRepository` (re-read → patch → write if changed) talk to the vault only through the `TextFileIO` port, so they are unit-tested with an in-memory fake.
+- `src/ui/` — Preact components. `ScoreboardApp.tsx` composes one component per section (`Header`, `ConfigBanner`, `Legend`, `GoalCards`, `Projects`, …); `MetricRows.tsx` has one row component per kind.
+- `src/obsidian/` — plugin entry (`main.ts`), the `ItemView`, settings tab, Enter values modal, and vault IO. `exportReviewWeek.ts` runs Export to Obsidian (refuse if blocked → compute → write the note → write the data file; Obsidian-free, tested with fakes); `startCoachingChat.ts` runs Start coaching chat (build the message → copy → open the saved chat URL, both synchronously in the click so mobile WebViews keep the user gesture, or the claude.ai projects page if none / not http(s); clipboard and `window.open` injected, tested with fakes; `coachingNotices` gives the notices). `planNote.ts` writes the 2027 Plan note with `vault.process` and shows the export notices. `ScoreboardStore` (view state, `reload()`, `updateData(patch)`) and `DataFileRepository` (re-read → patch → write if changed) talk to the vault only through the `TextFileIO` port, so they are unit-tested with an in-memory fake.
 - `src/adapters/` — source adapters (`types.ts` the `SourceAdapter` interface; `trackerAdapter.ts` one Tracker API request per refresh, HTTP injected). The store runs them on every `reload()` before the snapshot step. Manual entry needs no adapter. `src/obsidian/http.ts` (`requestUrl`) and `trackerApiKey.ts` (secret storage, else settings) are the Obsidian edges.
-- `tests/fixtures/` — sample config and test helpers. `examples/scoreboard.yaml` is a full 11-metric config for manual testing: copy it to the config path in settings.
+- `tests/fixtures/` — sample config and test helpers. `examples/scoreboard.yaml` is the real 2027 config (5 goals, 11 metrics; tracker ids are placeholders until the API key is set, then the config banner lists the real ids): copy it to the config path in settings.
 
 ## Install into a vault
 

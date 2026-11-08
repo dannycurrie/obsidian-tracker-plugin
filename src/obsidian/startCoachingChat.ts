@@ -16,6 +16,10 @@
  *   pasted into settings.
  * - If copying fails the chat still opens, and a notice says the context
  *   wasn't copied (so the paste won't be the message) and to try again.
+ * - The copy is started and the URL opened synchronously, before the first
+ *   await, so both happen inside the click's user gesture (mobile WebViews
+ *   drop clipboard writes and popups after an await). The caller must not
+ *   await anything before calling this: it uses the state as it stands.
  */
 import { configValidationState } from "../core/configStatus";
 import { renderCoachingMessage } from "../core/coachingMessage";
@@ -99,11 +103,17 @@ export async function startCoachingChat(deps: CoachingDeps): Promise<CoachingOut
     return { ok: false, error: `Couldn't build the coaching context: ${errorMessage(e)}` };
   }
 
-  let copyError: string | null = null;
+  // Start the copy and open the URL synchronously, before any await: mobile
+  // WebViews (iOS) only allow clipboard writes and window.open while the
+  // click's user activation lasts, and it can lapse across an await.
+  let copying: Promise<string | null>;
   try {
-    await deps.copyText(message);
+    copying = Promise.resolve(deps.copyText(message)).then(
+      () => null,
+      (e: unknown) => errorMessage(e),
+    );
   } catch (e) {
-    copyError = errorMessage(e);
+    copying = Promise.resolve(errorMessage(e));
   }
 
   const checked = checkChatUrl(deps.chatUrl);
@@ -114,6 +124,7 @@ export async function startCoachingChat(deps: CoachingDeps): Promise<CoachingOut
   } catch (e) {
     openError = errorMessage(e);
   }
+  const copyError = await copying;
 
   const validation = configValidationState(state);
   return {

@@ -3,3 +3,12 @@ main.js
 *.map
 data.json
 .claude/
+
+# Dev vault (.scratch/2027-scoreboard/dev-vault): plugin build copied in by
+# `npm run install:dev-vault`, and what Obsidian writes while testing.
+.scratch/2027-scoreboard/dev-vault/.obsidian/plugins/
+.scratch/2027-scoreboard/dev-vault/.obsidian/workspace*.json
+.scratch/2027-scoreboard/dev-vault/.obsidian/*.json
+!.scratch/2027-scoreboard/dev-vault/.obsidian/community-plugins.json
+.scratch/2027-scoreboard/dev-vault/.trash/
+.scratch/2027-scoreboard/dev-vault/🗺️ Plans/🎯 2027 Plan/scoreboard-data.json

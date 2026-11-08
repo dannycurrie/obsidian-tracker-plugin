@@ -63,6 +63,37 @@ describe("startCoachingChat", () => {
     expect(COPIED_NOTICE).toBe("Coaching context copied — paste it into the chat.");
   });
 
+  it("starts the copy and opens the URL synchronously, inside the click's user gesture", async () => {
+    // Mobile WebViews drop clipboard writes and popups once an await has
+    // passed, so both calls must happen before startCoachingChat yields.
+    const calls: string[] = [];
+    let finishCopy!: () => void;
+    const { deps } = setup({
+      copyText: (text) => {
+        calls.push(`copy:${text.slice(0, 26)}`);
+        return new Promise<void>((resolve) => (finishCopy = resolve));
+      },
+      openUrl: (url) => {
+        calls.push(`open:${url}`);
+      },
+    });
+    const pending = startCoachingChat(deps);
+    expect(calls).toEqual(["copy:Weekly scoreboard check-in", `open:${CHAT}`]);
+    finishCopy();
+    expect(await pending).toMatchObject({ ok: true, copyError: null });
+  });
+
+  it("reports a copy function that throws synchronously as a copy error, still opening the chat", async () => {
+    const { deps, opened } = setup({
+      copyText: () => {
+        throw new Error("the clipboard isn't available");
+      },
+    });
+    const outcome = await startCoachingChat(deps);
+    expect(outcome).toMatchObject({ ok: true, copyError: "the clipboard isn't available" });
+    expect(opened).toEqual([CHAT]);
+  });
+
   it("with no saved URL opens the claude.ai projects page and asks for the chat URL in settings", async () => {
     const { deps, copied, opened } = setup({ chatUrl: "  " });
     const outcome = await startCoachingChat(deps);

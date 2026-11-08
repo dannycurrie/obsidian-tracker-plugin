@@ -21,6 +21,33 @@ export function MetricRow({ row, timeZone }: { row: MetricRowModel; timeZone: st
   }
 }
 
+/**
+ * "40 / 60 min" as the mockup shows it: the value large, " / target" small
+ * and muted. The text content stays "40 / 60 min".
+ */
+function ValueOverTarget({ text }: { text: string }) {
+  const at = text.indexOf(" / ");
+  if (at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <span class="scoreboard-metric__target">{text.slice(at)}</span>
+    </>
+  );
+}
+
+/** Row header: label left, small uppercase cadence right ("This week", "Year total", …). */
+function RowHead({ label, cadence }: { label: string; cadence: string }) {
+  return (
+    <div class="scoreboard-metric__head">
+      <div class="scoreboard-metric__label">{label}</div>
+      <div class="scoreboard-metric__cadence">{cadence}</div>
+    </div>
+  );
+}
+
+const YEAR_CADENCE = { linear: "Year total", quarterly: "Ramp to Dec", milestones: "Milestones" } as const;
+
 interface RowProps<R> {
   row: R;
   timeZone: string;
@@ -42,9 +69,9 @@ export function WeeklyMetricRow({ row, timeZone }: RowProps<WeeklyRowModel>) {
   const { metric, value, status } = row;
   return (
     <li class={`scoreboard-metric scoreboard-metric--weekly ${statusClass(row)}`} data-metric-id={metric.id}>
-      <div class="scoreboard-metric__label">{metric.label}</div>
+      <RowHead label={metric.label} cadence="This week" />
       <div class="scoreboard-metric__value" title={value ? valueSourceTitle(value, timeZone) : "No value this week"}>
-        {formatValueOverTarget(value?.value ?? null, metric.target, metric.unit)}
+        <ValueOverTarget text={formatValueOverTarget(value?.value ?? null, metric.target, metric.unit)} />
         <StaleBadge value={value} />
       </div>
       <HistoryStrip weeks={row.history} unit={metric.unit} />
@@ -65,9 +92,9 @@ export function YearMetricRow({ row, timeZone }: RowProps<YearRowModel>) {
   const planText = `Plan today: ${formatValue(Math.round(planValue * 10) / 10, metric.unit)}`;
   return (
     <li class={`scoreboard-metric scoreboard-metric--year ${yearStatusClass(row)}`} data-metric-id={metric.id}>
-      <div class="scoreboard-metric__label">{metric.label}</div>
+      <RowHead label={metric.label} cadence={YEAR_CADENCE[metric.plan.type]} />
       <div class="scoreboard-metric__value" title={value ? valueSourceTitle(value, timeZone) : "No value yet"}>
-        {formatValueOverTarget(value?.value ?? null, metric.target, metric.unit)}
+        <ValueOverTarget text={formatValueOverTarget(value?.value ?? null, metric.target, metric.unit)} />
         <StaleBadge value={value} />
       </div>
       <div
@@ -94,7 +121,7 @@ export function UntargetedMetricRow({ row, timeZone }: RowProps<UntargetedRowMod
   const { metric, value, change } = row;
   return (
     <li class="scoreboard-metric scoreboard-metric--untargeted is-neutral" data-metric-id={metric.id}>
-      <div class="scoreboard-metric__label">{metric.label}</div>
+      <RowHead label={metric.label} cadence="Trend" />
       <div class="scoreboard-metric__value" title={value ? valueSourceTitle(value, timeZone) : "No value yet"}>
         {value ? formatValue(value.value, metric.unit) : NO_VALUE}
         <StaleBadge value={value} />

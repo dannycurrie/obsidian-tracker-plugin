@@ -24,7 +24,7 @@ export function Projects({ projects, onOpenNote }: ProjectsProps) {
   if (!projects) return null;
   const { active, backlog, overSlotLimit } = projects;
   return (
-    <>
+    <div class="scoreboard-projects-row">
       <section class="scoreboard-section scoreboard-projects" aria-label="Active strategic projects">
         <header class="scoreboard-projects__header">
           <h2 class="scoreboard-projects__title">Active strategic projects</h2>
@@ -55,12 +55,15 @@ export function Projects({ projects, onOpenNote }: ProjectsProps) {
         )}
       </section>
       <section class="scoreboard-section scoreboard-backlog" aria-label="Backlog">
-        <h2 class="scoreboard-projects__title">Backlog</h2>
+        <header class="scoreboard-projects__header">
+          <h2 class="scoreboard-projects__title">Backlog</h2>
+          <span class="scoreboard-projects__slots">in pull order</span>
+        </header>
         {backlog.length > 0 ? (
           <ol class="scoreboard-backlog__list">
             {backlog.map((p) => (
               <li key={p.path} class="scoreboard-backlog__item">
-                <ProjectLink path={p.path} title={p.title} onOpenNote={onOpenNote} />
+                <ProjectLink path={p.path} title={p.title} onOpenNote={onOpenNote} class="scoreboard-backlog__name" />
                 <GoalTag tag={p.goal} />
               </li>
             ))}
@@ -69,7 +72,7 @@ export function Projects({ projects, onOpenNote }: ProjectsProps) {
           <p class="scoreboard-empty">The backlog is empty.</p>
         )}
       </section>
-    </>
+    </div>
   );
 }
 

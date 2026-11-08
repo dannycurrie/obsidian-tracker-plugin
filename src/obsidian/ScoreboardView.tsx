@@ -120,9 +120,12 @@ export class ScoreboardView extends ItemView {
   }
 
   /**
-   * Start coaching chat: refreshes first (like Export), then copies the
-   * review week's context message and opens the saved coaching chat
-   * (startCoachingChat), and shows the notices. Clicks while one runs are ignored.
+   * Start coaching chat: copies the review week's context message and opens
+   * the saved coaching chat (startCoachingChat), and shows the notices.
+   * Unlike Export it does not refresh first: the copy and window.open must
+   * run synchronously in the click (mobile WebViews drop clipboard writes and
+   * popups after an await), so it uses the current state, which is refreshed
+   * on open, every 15 minutes and by Refresh. Clicks while one runs are ignored.
    */
   async startCoaching(): Promise<void> {
     const store = this.store;
@@ -130,7 +133,6 @@ export class ScoreboardView extends ItemView {
     if (!store || !projects || this.coaching) return;
     this.coaching = true;
     try {
-      await this.reload();
       const state = store.getState();
       const notes = projects.getState().notes;
       const outcome = await startCoachingChat({

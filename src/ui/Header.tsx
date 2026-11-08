@@ -1,5 +1,5 @@
 import { formatInstant } from "../core/format";
-import { formatScore, type Score } from "../core/score";
+import type { Score } from "../core/score";
 import { weekOfYearLabel, type IsoWeek } from "../core/week";
 
 export interface HeaderActions {
@@ -33,7 +33,9 @@ export interface HeaderProps extends HeaderActions {
 }
 
 /**
- * Scoreboard header: title, "Week N of 52", score tiles and action buttons.
+ * Scoreboard header: "2027 Scoreboard" kicker, "Week N of 52" title, score
+ * tiles and action buttons (mockup: tiles right of the title, wrapping below
+ * it on narrow widths; actions on their own row).
  * Also the last-refreshed time and any failing source (ticket 07).
  * Export to Obsidian (ticket 09) and Start coaching chat (ticket 10).
  */
@@ -56,8 +58,8 @@ export function Header({
   return (
     <header class="scoreboard-header">
       <div class="scoreboard-header__titles">
-        <h1 class="scoreboard-header__title">2027 Scoreboard</h1>
-        <div class="scoreboard-header__week">{weekOfYearLabel(week)}</div>
+        <div class="scoreboard-header__kicker">2027 Scoreboard</div>
+        <h1 class="scoreboard-header__title">{weekOfYearLabel(week)}</h1>
         {refreshed && <div class="scoreboard-header__refreshed">Refreshed {refreshed}</div>}
         {sourceErrors?.map((e, i) => (
           <div key={i} class="scoreboard-header__source-error" role="status">
@@ -66,7 +68,7 @@ export function Header({
         ))}
       </div>
       <div class="scoreboard-header__tiles">
-        {thisWeek && <ScoreTile label="This week" score={thisWeek} caption="weekly targets hit" />}
+        {thisWeek && <ScoreTile label="This week" score={thisWeek} caption="weekly targets hit" primary />}
         {yearToDate && <ScoreTile label="Year to date" score={yearToDate} caption="year targets on pace" />}
       </div>
       <div class="scoreboard-header__actions">
@@ -106,13 +108,21 @@ export interface ScoreTileProps {
   score: Score;
   /** e.g. "weekly targets hit", "year targets on pace". */
   caption: string;
+  /** The emphasised (dark) tile, as "This week" in the mockup. */
+  primary?: boolean;
 }
 
-export function ScoreTile({ label, score, caption }: ScoreTileProps) {
+export function ScoreTile({ label, score, caption, primary }: ScoreTileProps) {
   return (
-    <div class="scoreboard-tile" aria-label={`${label}: ${score.achieved} of ${score.total} ${caption}`}>
+    <div
+      class={`scoreboard-tile${primary ? " scoreboard-tile--primary" : ""}`}
+      aria-label={`${label}: ${score.achieved} of ${score.total} ${caption}`}
+    >
       <div class="scoreboard-tile__label">{label}</div>
-      <div class="scoreboard-tile__score">{formatScore(score)}</div>
+      <div class="scoreboard-tile__score">
+        {score.achieved}
+        <span class="scoreboard-tile__total"> / {score.total}</span>
+      </div>
       <div class="scoreboard-tile__caption">{caption}</div>
     </div>
   );

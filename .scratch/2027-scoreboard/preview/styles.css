@@ -1,0 +1,807 @@
+/*
+ * 2027 Scoreboard. Layout, type scale and spacing follow the "2027 scoreboard ·
+ * 5 goals + projects" mockup artboard (minus the season tile and stage bar).
+ * Colours use Obsidian theme variables so light and dark themes work; the
+ * mockup's Space Grotesk headings use the interface font instead (no font
+ * downloads: the plugin makes no network calls other than the Tracker API).
+ *
+ * Sizes scale with the user's text size: --sb-base is Obsidian's text size
+ * (16px by default) and every font size is a multiple of it, so nested sizes
+ * never compound. Mockup px at 16px base are noted where useful.
+ */
+
+/* ---------- Tokens ---------- */
+
+.view-content.scoreboard-view,
+.scoreboard-view {
+  padding: 0;
+  background: var(--background-secondary);
+  container-type: inline-size;
+  container-name: scoreboard;
+}
+
+.scoreboard {
+  --sb-base: var(--font-text-size, 16px);
+  /* Status colours: blue = on track / hit, orange = behind / missed, grey = neutral.
+     Never colour alone: every status also has words. */
+  --sb-blue: var(--color-blue, #2f6feb);
+  --sb-orange: var(--color-orange, #d9621e);
+  /* Text tones: the status colour pulled towards the text colour for contrast
+     (darker in light themes, lighter in dark themes). */
+  --sb-blue-text: var(--sb-blue);
+  --sb-orange-text: var(--sb-orange);
+  --sb-blue-text: color-mix(in srgb, var(--sb-blue) 78%, var(--text-normal));
+  --sb-orange-text: color-mix(in srgb, var(--sb-orange) 68%, var(--text-normal));
+  --sb-blue-bg: rgba(var(--color-blue-rgb, 47, 111, 235), 0.14);
+  --sb-orange-bg: rgba(var(--color-orange-rgb, 217, 98, 30), 0.14);
+  --sb-neutral: var(--text-muted);
+  --sb-neutral-bg: var(--background-modifier-hover);
+  --sb-track: var(--background-modifier-border);
+  --sb-card-bg: var(--background-primary);
+  --sb-card-border: var(--background-modifier-border);
+  --sb-divider: var(--background-modifier-border);
+  --sb-radius-card: 16px;
+  --sb-radius-tile: 14px;
+
+  /* Older names, kept for anything still using them. */
+  --scoreboard-on-track: var(--sb-blue);
+  --scoreboard-behind: var(--sb-orange);
+  --scoreboard-neutral: var(--sb-neutral);
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1360px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 44px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  color: var(--text-normal);
+  font-size: var(--sb-base);
+}
+
+.scoreboard *,
+.scoreboard *::before,
+.scoreboard *::after {
+  box-sizing: border-box;
+}
+
+.scoreboard-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.875);
+}
+
+/* ---------- Header ---------- */
+
+.scoreboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+}
+
+.scoreboard-header__titles {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 13px uppercase kicker */
+.scoreboard-header__kicker {
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.8125);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 44px "Week N of 52" */
+.scoreboard-header__title {
+  margin: 0;
+  font-family: var(--font-interface);
+  font-size: calc(var(--sb-base) * 2.75);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.scoreboard-header__refreshed {
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.8125);
+}
+
+.scoreboard-header__source-error {
+  color: var(--sb-orange-text);
+  font-size: calc(var(--sb-base) * 0.8125);
+  font-weight: 600;
+}
+
+.scoreboard-header__tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.scoreboard-tile {
+  min-width: 170px;
+  padding: 14px 22px;
+  border: 1px solid var(--sb-card-border);
+  border-radius: var(--sb-radius-tile);
+  background: var(--sb-card-bg);
+}
+
+/* "This week": the emphasised dark tile */
+.scoreboard-tile--primary {
+  border-color: var(--text-normal);
+  background: var(--text-normal);
+  color: var(--background-primary);
+}
+
+.scoreboard-tile__label {
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.75);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* 36px score, 20px " / total" */
+.scoreboard-tile__score {
+  font-family: var(--font-interface);
+  font-size: calc(var(--sb-base) * 2.25);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreboard-tile__total {
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 1.25);
+}
+
+.scoreboard-tile__caption {
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.8125);
+}
+
+.scoreboard-tile--primary .scoreboard-tile__label,
+.scoreboard-tile--primary .scoreboard-tile__total,
+.scoreboard-tile--primary .scoreboard-tile__caption {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.scoreboard-header__actions {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scoreboard-header__actions button {
+  margin: 0;
+}
+
+/* Export while the config is invalid: still clickable (the notice explains), but looks unavailable. */
+.scoreboard-header__export[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
+/* ---------- Banners and the project-fixes line ---------- */
+
+.scoreboard-banner {
+  padding: 12px 16px;
+  border: 1px solid var(--sb-orange);
+  border-radius: var(--radius-m, 8px);
+  background: var(--sb-orange-bg);
+  font-size: calc(var(--sb-base) * 0.875);
+}
+
+.scoreboard-banner__line {
+  margin: 0 0 4px;
+}
+
+.scoreboard-banner__list {
+  margin: 0;
+  padding-left: 1.25em;
+  font-family: var(--font-monospace);
+  font-size: calc(var(--sb-base) * 0.8125);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.scoreboard-banner--warning {
+  border-color: var(--sb-card-border);
+  background: var(--sb-card-bg);
+}
+
+.scoreboard-project-fixes {
+  font-size: calc(var(--sb-base) * 0.875);
+}
+
+.scoreboard-project-fixes__summary {
+  cursor: pointer;
+}
+
+.scoreboard-project-fixes__summary.is-behind {
+  color: var(--sb-orange-text);
+  font-weight: 600;
+}
+
+.scoreboard-project-fixes__list {
+  margin: 4px 0 0;
+  padding-left: 1.25em;
+}
+
+.scoreboard-project-fixes__problem {
+  color: var(--text-muted);
+}
+
+/* ---------- Legend ---------- */
+
+.scoreboard-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.8125);
+}
+
+.scoreboard-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scoreboard-legend__tick {
+  display: inline-block;
+  width: 3px;
+  height: 16px;
+  background: var(--text-normal);
+}
+
+.scoreboard-legend__square {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.scoreboard-legend__square.is-hit {
+  background: var(--sb-blue);
+}
+
+.scoreboard-legend__square.is-missed {
+  background: var(--sb-track);
+}
+
+/* ---------- Goal cards ---------- */
+
+.scoreboard-goals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 16px;
+}
+
+.scoreboard-goal {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--sb-card-border);
+  border-radius: var(--sb-radius-card);
+  background: var(--sb-card-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scoreboard-goal__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+/* 22px goal name */
+.scoreboard-goal__name {
+  margin: 0;
+  font-family: var(--font-interface);
+  font-size: calc(var(--sb-base) * 1.375);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* "x / y on track" pill: tinted background, words always */
+.scoreboard-goal__badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--sb-neutral-bg);
+  color: var(--text-normal);
+  font-size: calc(var(--sb-base) * 0.75);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.scoreboard-goal__badge.is-on-track {
+  background: var(--sb-blue-bg);
+  color: var(--sb-blue-text);
+}
+
+.scoreboard-goal__badge.is-behind {
+  background: var(--sb-orange-bg);
+  color: var(--sb-orange-text);
+}
+
+/* 14px statement */
+.scoreboard-goal__statement {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.875);
+  line-height: 1.4;
+}
+
+.scoreboard-goal__metrics {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Metric rows ---------- */
+
+.scoreboard-metric {
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--sb-divider);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scoreboard-metric__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* 13px label */
+.scoreboard-metric__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: calc(var(--sb-base) * 0.8125);
+  font-weight: 600;
+}
+
+/* 11px uppercase cadence */
+.scoreboard-metric__cadence {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.6875);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* 24px value, 14px " / target" */
+.scoreboard-metric__value {
+  font-family: var(--font-interface);
+  font-size: calc(var(--sb-base) * 1.5);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.scoreboard-metric__target {
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.875);
+  font-weight: 500;
+}
+
+.scoreboard-stale {
+  color: var(--sb-orange-text);
+  font-size: calc(var(--sb-base) * 0.8125);
+  font-weight: 600;
+}
+
+/* 13px status line */
+.scoreboard-metric__status {
+  color: var(--sb-neutral);
+  font-size: calc(var(--sb-base) * 0.8125);
+  font-weight: 600;
+}
+
+.scoreboard-metric.is-on-track .scoreboard-metric__status {
+  color: var(--sb-blue-text);
+}
+
+.scoreboard-metric.is-behind .scoreboard-metric__status {
+  color: var(--sb-orange-text);
+}
+
+.scoreboard-metric__age,
+.scoreboard-metric__change {
+  color: var(--sb-neutral);
+  font-weight: 500;
+}
+
+/* Year rows: 10px progress bar with a plan tick for today */
+.scoreboard-progress {
+  position: relative;
+  height: 10px;
+  margin: 4px 0;
+  border-radius: 5px;
+  background: var(--sb-track);
+}
+
+.scoreboard-progress__fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--sb-neutral);
+}
+
+.scoreboard-metric.is-on-track .scoreboard-progress__fill {
+  background: var(--sb-blue);
+}
+
+.scoreboard-metric.is-behind .scoreboard-progress__fill {
+  background: var(--sb-orange);
+}
+
+.scoreboard-progress__plan-tick {
+  position: absolute;
+  top: -4px;
+  width: 3px;
+  height: 18px;
+  margin-left: -1.5px;
+  background: var(--text-normal);
+}
+
+/* Weekly rows: the 8-week strip (filled = hit, grey = missed) and its words */
+.scoreboard-history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scoreboard-history {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 320px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 4px;
+}
+
+.scoreboard-history__week {
+  flex: 1 1 0;
+  min-width: 6px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.scoreboard-history__week.is-hit {
+  background: var(--sb-blue);
+}
+
+.scoreboard-history__week.is-missed {
+  background: var(--sb-track);
+}
+
+/* Untargeted strip: the same squares with no hit/miss colouring */
+.scoreboard-history__week.is-neutral {
+  background: var(--sb-neutral);
+  opacity: 0.55;
+}
+
+.scoreboard-history__week.is-no-data {
+  border: 1px dashed var(--sb-neutral);
+}
+
+.scoreboard-history__summary {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.6875);
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Strategic projects and backlog ---------- */
+
+.scoreboard-projects-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.scoreboard-projects {
+  flex: 999 1 640px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.scoreboard-backlog {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.scoreboard-projects__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+/* 24px section heading */
+.scoreboard-projects__title {
+  margin: 0;
+  font-family: var(--font-interface);
+  font-size: calc(var(--sb-base) * 1.5);
+  font-weight: 700;
+}
+
+.scoreboard-projects__slots {
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.8125);
+  font-weight: 600;
+}
+
+.scoreboard-projects__slots.is-behind,
+.scoreboard-project__next.is-behind {
+  color: var(--sb-orange-text);
+  font-weight: 600;
+}
+
+.scoreboard-projects__cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 14px;
+}
+
+.scoreboard-project {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--sb-card-border);
+  border-radius: var(--sb-radius-card);
+  background: var(--sb-card-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* 17px project name */
+.scoreboard-project__name {
+  font-size: calc(var(--sb-base) * 1.0625);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.scoreboard-project__next {
+  color: var(--text-muted);
+  font-size: calc(var(--sb-base) * 0.8125);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.scoreboard-project__next-label {
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.scoreboard-project-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--sb-neutral-bg);
+  color: var(--text-normal);
+  font-size: calc(var(--sb-base) * 0.75);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.scoreboard-project-tag.is-unknown {
+  color: var(--sb-neutral);
+  font-style: italic;
+}
+
+/* Backlog: one card, numbered rows (CSS counter, so the text stays the names) */
+.scoreboard-backlog__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--sb-card-border);
+  border-radius: var(--sb-radius-card);
+  background: var(--sb-card-bg);
+  overflow: hidden;
+  counter-reset: scoreboard-backlog;
+}
+
+.scoreboard-backlog__item {
+  counter-increment: scoreboard-backlog;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--sb-divider);
+}
+
+.scoreboard-backlog__item:last-child {
+  border-bottom: none;
+}
+
+.scoreboard-backlog__item::before {
+  content: counter(scoreboard-backlog);
+  flex-shrink: 0;
+  width: 18px;
+  color: var(--text-muted);
+  font-family: var(--font-interface);
+  font-size: calc(var(--sb-base) * 0.9375);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreboard-backlog__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: calc(var(--sb-base) * 0.9375);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Enter values form (modal) ---------- */
+
+.scoreboard-enter-values {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scoreboard-enter-values__intro {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.scoreboard-enter-values__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scoreboard-enter-values__field input {
+  width: 100%;
+}
+
+.scoreboard-enter-values__goal {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 0.85em);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.scoreboard-enter-values__hint {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 0.85em);
+}
+
+.scoreboard-enter-values__error {
+  color: var(--text-error);
+  font-size: var(--font-ui-smaller, 0.85em);
+}
+
+.scoreboard-enter-values__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ---------- Narrow panes and phones (360 px and up) ----------
+   A container query, so a narrow desktop split pane reflows as a phone does. */
+
+@container scoreboard (max-width: 560px) {
+  .scoreboard {
+    padding: 20px 12px 40px;
+    gap: 20px;
+  }
+
+  .scoreboard-header__title {
+    font-size: calc(var(--sb-base) * 2);
+  }
+
+  /* Two tiles side by side at 360 px */
+  .scoreboard-tile {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 12px 14px;
+  }
+
+  .scoreboard-tile__score {
+    font-size: calc(var(--sb-base) * 1.875);
+  }
+
+  /* Actions: a 2 × 2 grid of full-width buttons */
+  .scoreboard-header__actions button {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    white-space: normal;
+    height: auto;
+  }
+
+  .scoreboard-goal {
+    padding: 16px;
+  }
+
+  .scoreboard-goals {
+    gap: 12px;
+  }
+
+  .scoreboard-history {
+    max-width: none;
+  }
+}
+
+/* ---------- Mobile: tap targets of at least 44 px ---------- */
+
+.is-mobile .scoreboard-header__actions button {
+  min-height: 44px;
+}
+
+.is-mobile .scoreboard-project__name {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.is-mobile .scoreboard-backlog__item {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.is-mobile .scoreboard-backlog__name {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+}
+
+.is-mobile .scoreboard-project-fixes__summary {
+  padding: 12px 0;
+}
+
+.is-mobile .scoreboard-project-fixes__list a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.is-mobile .scoreboard-enter-values__field input,
+.is-mobile .scoreboard-enter-values__buttons button {
+  min-height: 44px;
+}

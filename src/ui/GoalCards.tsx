@@ -31,13 +31,25 @@ export function GoalCards({ goals, timeZone, emptyMessage }: GoalCardsProps) {
 /** Badge colour class: blue all on track, orange none on track and some behind, grey otherwise. */
 const BADGE_CLASS: Record<BadgeTone, string> = { "on-track": "is-on-track", behind: "is-behind", neutral: "is-neutral" };
 
+/**
+ * The badge colour's meaning in words (hover / screen readers); the rows
+ * below the badge also say which metrics are behind or missed.
+ */
+const BADGE_TITLE: Record<BadgeTone, string> = {
+  "on-track": "Every scored metric is on track",
+  behind: "Nothing on track yet, and at least one metric is behind or missed",
+  neutral: "Some metrics on track, or still in progress this week",
+};
+
 export function GoalCard({ card, timeZone }: { card: GoalCardModel; timeZone: string }) {
   const { goal, rows, badge } = card;
   return (
     <article class="scoreboard-goal" data-goal-id={goal.id}>
       <header class="scoreboard-goal__header">
         <h2 class="scoreboard-goal__name">{goal.name}</h2>
-        <span class={`scoreboard-goal__badge ${BADGE_CLASS[badge.tone]}`}>{goalBadgeLabel(badge)}</span>
+        <span class={`scoreboard-goal__badge ${BADGE_CLASS[badge.tone]}`} title={BADGE_TITLE[badge.tone]}>
+          {goalBadgeLabel(badge)}
+        </span>
       </header>
       {goal.statement && <p class="scoreboard-goal__statement">{goal.statement}</p>}
       {rows.length > 0 ? (
