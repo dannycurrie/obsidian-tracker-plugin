@@ -126,3 +126,34 @@ describe("applyDataPatch", () => {
     expect(doc.version).toBe(1);
   });
 });
+
+describe("readScoreboardData snapshots", () => {
+  it("reads week snapshots tolerantly", () => {
+    const data = readScoreboardData({
+      version: 1,
+      snapshots: {
+        "2027-W17": {
+          frozen: true,
+          updatedAt: at,
+          metrics: {
+            music: { value: 40, target: 60, verdict: "missed", source: "manual", fetchedAt: at, extra: 1 },
+            odd: { value: "x", target: null },
+            junk: 5,
+          },
+        },
+        "2027-W18": { metrics: {} },
+        bad: "nope",
+      },
+    });
+    expect(data.snapshots["2027-W17"]).toEqual({
+      frozen: true,
+      updatedAt: at,
+      metrics: {
+        music: { value: 40, target: 60, verdict: "missed", source: "manual", fetchedAt: at },
+        odd: { value: null, target: null },
+      },
+    });
+    expect(data.snapshots["2027-W18"]).toEqual({ frozen: false, updatedAt: "", metrics: {} });
+    expect(data.snapshots.bad).toBeUndefined();
+  });
+});

@@ -6,6 +6,7 @@ import { formatValue, formatValueOverTarget, NO_VALUE, valueSourceTitle } from "
 import type { MetricRowModel, UntargetedRowModel, WeeklyRowModel, YearRowModel } from "../core/model";
 import { weeklyStatusLabel } from "../core/weeklyScoring";
 import { updatedWeeksAgoLabel, yearStatusLabel } from "../core/yearScoring";
+import { HistoryStrip } from "./HistoryStrip";
 
 export function MetricRow({ row, timeZone }: { row: MetricRowModel; timeZone: string }) {
   switch (row.kind) {
@@ -43,8 +44,8 @@ export function WeeklyMetricRow({ row, timeZone }: RowProps<WeeklyRowModel>) {
       <div class="scoreboard-metric__value" title={value ? valueSourceTitle(value, timeZone) : "No value this week"}>
         {formatValueOverTarget(value?.value ?? null, metric.target, metric.unit)}
       </div>
-      {/* Ticket 04: 8-week history strip goes here. */}
-      <div class="scoreboard-metric__status">{weeklyStatusLabel(status)}</div>
+      <HistoryStrip weeks={row.history} unit={metric.unit} />
+      <div class="scoreboard-metric__status">{weeklyStatusLabel(status, row.streak)}</div>
     </li>
   );
 }

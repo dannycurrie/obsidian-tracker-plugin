@@ -45,15 +45,18 @@ export interface ManualEntries {
 }
 
 /**
- * One metric's line in a week snapshot. PLACEHOLDER: ticket 04 owns the
- * final shape (it may add fields; keep them optional or bump the version).
+ * One metric's line in a week snapshot. Built and updated by
+ * `src/core/snapshots.ts`; new fields must be optional (or bump the version).
  */
 export interface WeekSnapshotMetric {
   /** The week value (weekly) or value at the time (year/untargeted); null = no data. */
   value: number | null;
-  /** The target that applied that week (stored so frozen weeks keep it); null for untargeted. */
+  /**
+   * The target that applied that week; null for untargeted. Once the
+   * snapshot is frozen this never changes, and the week is scored against it.
+   */
   target: number | null;
-  /** Verdict at the time, e.g. "hit" | "missed" | "in-progress" | "on-pace" | "behind". */
+  /** Verdict at the time: weekly "hit" | "missed" | "in-progress" (year verdicts: ticket 03). */
   verdict?: string;
   /** Source and fetch time of the value (ticket 07 hover). */
   source?: "manual" | "tracker";
@@ -152,10 +155,11 @@ export function readScoreboardData(doc: RawDataDocument): ScoreboardData {
     const e = readEntry(entry);
     if (e) data.manual.latest[metricId] = e;
   }
-  // Snapshots and exports: shape owned by tickets 04 and 09; pass through objects as-is.
   for (const [weekKey, snap] of entriesOf(doc.snapshots)) {
-    if (isRecord(snap) && isRecord(snap.metrics)) data.snapshots[weekKey] = snap as unknown as WeekSnapshot;
+    const s = readSnapshot(snap);
+    if (s) data.snapshots[weekKey] = s;
   }
+  // Exports: shape owned by ticket 09; pass through objects as-is.
   for (const [weekKey, rec] of entriesOf(doc.exports)) {
     if (isRecord(rec)) data.exports[weekKey] = rec as unknown as ExportRecord;
   }
@@ -184,7 +188,7 @@ export function setManualLatestEntry(metricId: string, entry: ManualEntry): Data
   return { path: ["manual", "latest", metricId], value: entry };
 }
 
-/** Sets (or replaces) a whole week snapshot (ticket 04 may add finer-grained ops). */
+/** Sets (or replaces) a whole week snapshot. Finer-grained ops live in snapshots.ts. */
 export function setWeekSnapshot(weekKey: string, snapshot: WeekSnapshot): DataPatchOp {
   return { path: ["snapshots", weekKey], value: snapshot };
 }
@@ -263,6 +267,21 @@ export function deepEqual(a: unknown, b: unknown): boolean {
 function readEntry(v: unknown): ManualEntry | null {
   if (!isRecord(v) || typeof v.value !== "number" || !Number.isFinite(v.value)) return null;
   return { value: v.value, enteredAt: typeof v.enteredAt === "string" ? v.enteredAt : "" };
+}
+
+function readSnapshot(v: unknown): WeekSnapshot | null {
+  if (!isRecord(v) || !isRecord(v.metrics)) return null;
+  const num = (x: unknown): number | null => (typeof x === "number" && Number.isFinite(x) ? x : null);
+  const metrics: Record<string, WeekSnapshotMetric> = {};
+  for (const [metricId, line] of entriesOf(v.metrics)) {
+    if (!isRecord(line)) continue;
+    const out: WeekSnapshotMetric = { value: num(line.value), target: num(line.target) };
+    if (typeof line.verdict === "string") out.verdict = line.verdict;
+    if (line.source === "manual" || line.source === "tracker") out.source = line.source;
+    if (typeof line.fetchedAt === "string") out.fetchedAt = line.fetchedAt;
+    metrics[metricId] = out;
+  }
+  return { frozen: v.frozen === true, updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : "", metrics };
 }
 
 function entriesOf(v: unknown): [string, unknown][] {

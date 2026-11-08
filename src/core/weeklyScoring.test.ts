@@ -42,6 +42,11 @@ describe("weeklyStatusLabel", () => {
     expect(weeklyStatusLabel({ state: "hit" })).toBe("Hit");
     expect(weeklyStatusLabel({ state: "missed", short: 1500 })).toBe("Missed (1,500 short)");
   });
+
+  it("reads 'Hit · streak N' when given a streak", () => {
+    expect(weeklyStatusLabel({ state: "hit" }, 4)).toBe("Hit · streak 4");
+    expect(weeklyStatusLabel({ state: "in-progress", toGo: 20 }, 4)).toBe("20 to go this week");
+  });
 });
 
 describe("thisWeekScore", () => {

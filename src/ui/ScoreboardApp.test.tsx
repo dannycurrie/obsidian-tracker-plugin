@@ -41,12 +41,31 @@ describe("ScoreboardApp", () => {
     expect(html).toContain("40 / 60 min");
     expect(html).toContain("20 to go this week");
     expect(html).toContain("26 / 25");
-    expect(html).toMatch(/>Hit</);
+    expect(html).toMatch(/>Hit · streak 1</);
     expect(html).toContain("This week");
     expect(html).toContain("1/3");
     expect(html).toContain("weekly targets hit");
     expect(html).toContain("Enter values");
     expect(html).toContain('title="Manual entry · 5 May 2027, 11:00"');
+  });
+
+  it("renders the history strip of completed weeks and 'Hit · streak N'", () => {
+    const data = emptyScoreboardData();
+    data.manual.weekly["music-practice"] = {
+      "2027-W15": { value: 60, enteredAt: at },
+      "2027-W17": { value: 70, enteredAt: at },
+      "2027-W18": { value: 60, enteredAt: at },
+    };
+    data.snapshots["2027-W16"] = { frozen: true, updatedAt: at, metrics: { "music-practice": { value: 50, target: 60 } } };
+    const html = render(<ScoreboardApp today={today} state={readyState({ data })} />);
+    expect(html).toContain('aria-label="Last 3 weeks: 2 hit, 1 missed"');
+    expect(html).toContain('title="Week 15: 60 / 60 min · Hit"');
+    expect(html).toContain('title="Week 16: 50 / 60 min · Missed"');
+    expect(html.match(/scoreboard-history__week is-hit/g)).toHaveLength(2);
+    expect(html.match(/scoreboard-history__week is-missed/g)).toHaveLength(1);
+    expect(html).toContain("Hit · streak 2");
+    // No strip for metrics with no data before this week.
+    expect(html.match(/class="scoreboard-history"/g)).toHaveLength(1);
   });
 
   it("says target, never goal, for the number", () => {

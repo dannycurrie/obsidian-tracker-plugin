@@ -32,11 +32,11 @@ export function thisWeekScore(statuses: readonly WeeklyStatus[]): Score {
   return { achieved: statuses.filter((s) => s.state === "hit").length, total: statuses.length };
 }
 
-/** Row copy: "Hit", "N to go this week" or "Missed (N short)". Ticket 04 adds the streak. */
-export function weeklyStatusLabel(status: WeeklyStatus): string {
+/** Row copy: "Hit" (or "Hit · streak N" when a streak is given), "N to go this week" or "Missed (N short)". */
+export function weeklyStatusLabel(status: WeeklyStatus, streak?: number): string {
   switch (status.state) {
     case "hit":
-      return "Hit";
+      return streak === undefined ? "Hit" : `Hit · streak ${streak}`;
     case "in-progress":
       return `${formatNumber(status.toGo)} to go this week`;
     case "missed":
