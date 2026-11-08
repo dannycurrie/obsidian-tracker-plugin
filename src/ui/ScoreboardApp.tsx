@@ -38,6 +38,7 @@ export function ScoreboardApp({ today, state, onRefresh, onEnterValues, projectN
       <Header
         week={model?.week ?? isoWeekOf(today)}
         thisWeek={model?.thisWeek}
+        yearToDate={model?.yearToDate}
         onRefresh={onRefresh}
         onEnterValues={state.config ? onEnterValues : undefined}
       />

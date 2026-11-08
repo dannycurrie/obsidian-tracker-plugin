@@ -11,11 +11,21 @@ Rules (all in `product-brief.md` Scoring rules):
 
 **Blocked by:** 02 (A weekly manual metric, end to end)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] All three curve types are pure functions with unit tests, including year start, quarter ends and between milestones
-- [ ] On-pace rule, global and per-metric tolerance, pace delta and the three labels are unit-tested
-- [ ] Year rows show value / target, progress bar, plan tick and the pace label
-- [ ] *Year to date* tile is correct and unit-tested
-- [ ] Enter values form pre-fills year fields; saving replaces the running total
-- [ ] "updated N wks ago" appears only when a manual year value is more than 4 weeks old
+- [x] All three curve types are pure functions with unit tests, including year start, quarter ends and between milestones
+- [x] On-pace rule, global and per-metric tolerance, pace delta and the three labels are unit-tested
+- [x] Year rows show value / target, progress bar, plan tick and the pace label
+- [x] *Year to date* tile is correct and unit-tested
+- [x] Enter values form pre-fills year fields; saving replaces the running total
+- [x] "updated N wks ago" appears only when a manual year value is more than 4 weeks old
+
+**Notes (implementation):**
+- Plan curves: `src/core/planCurve.ts` (`planValueOn`). Day-based: 1 Jan = baseline, 31 Dec = year-end value; clamped outside the year. Quarterly knots on 31 Mar, 30 Jun, 30 Sep, 31 Dec.
+- Pace: `src/core/yearScoring.ts`. No value yet counts as 0. Pace deltas are rounded for display (whole numbers from 10 up, else 1 decimal); verdicts use the exact delta. A delta of exactly 0 reads "0 ahead of pace", as the rule says.
+- "updated N wks ago" shows when a manual year value was entered more than 28 days ago (calendar days in the config timezone); N = whole weeks.
+- Enter values pre-fill and replace-on-save already existed from ticket 02; a test now pins the replace behaviour.
+
+**Manual checks in Obsidian:**
+- Progress bar and plan tick look right (light and dark themes, 360 px and 1440 px).
+- Year to date tile sits next to This week and wraps on mobile.

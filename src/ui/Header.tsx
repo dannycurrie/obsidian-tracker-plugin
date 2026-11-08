@@ -12,15 +12,17 @@ export interface HeaderProps extends HeaderActions {
   week: IsoWeek;
   /** "This week" tile; omitted while there is no config. */
   thisWeek?: Score;
-  // Ticket 03: yearToDate?: Score. Ticket 07: last-refreshed date.
+  /** "Year to date" tile; omitted while there is no config. */
+  yearToDate?: Score;
+  // Ticket 07: last-refreshed date.
 }
 
 /**
  * Scoreboard header: title, "Week N of 52", score tiles and action buttons.
- * Later tickets add the Year to date tile (03), last-refreshed date (07),
+ * Later tickets add the last-refreshed date (07),
  * Export (09) and Start coaching chat (10).
  */
-export function Header({ week, thisWeek, onRefresh, onEnterValues }: HeaderProps) {
+export function Header({ week, thisWeek, yearToDate, onRefresh, onEnterValues }: HeaderProps) {
   return (
     <header class="scoreboard-header">
       <div class="scoreboard-header__titles">
@@ -29,6 +31,7 @@ export function Header({ week, thisWeek, onRefresh, onEnterValues }: HeaderProps
       </div>
       <div class="scoreboard-header__tiles">
         {thisWeek && <ScoreTile label="This week" score={thisWeek} caption="weekly targets hit" />}
+        {yearToDate && <ScoreTile label="Year to date" score={yearToDate} caption="year targets on pace" />}
       </div>
       <div class="scoreboard-header__actions">
         {onRefresh && (

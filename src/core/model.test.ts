@@ -42,3 +42,42 @@ describe("buildScoreboardModel", () => {
     expect(buildScoreboardModel(sampleConfig(), data, today).thisWeek).toEqual({ achieved: 1, total: 3 });
   });
 });
+
+describe("buildScoreboardModel: year metrics", () => {
+  // 5 May 2027 is day 124: linear EPs plan 5 × 124/364 ≈ 1.70; ASL quarterly 10 + 40 × 35/91 ≈ 25.38%.
+  const rowsOf = (data = emptyScoreboardData()) =>
+    Object.fromEntries(buildScoreboardModel(sampleConfig(), data, today).goals.flatMap((g) => g.rows).map((r) => [r.metric.id, r]));
+
+  it("scores year rows against the plan curve today, with the per-metric tolerance", () => {
+    const data = emptyScoreboardData();
+    data.manual.latest["eps"] = { value: 1.6, enteredAt: at }; // ≥ 0.9 × 1.70
+    data.manual.latest["asl"] = { value: 24, enteredAt: at }; // < 0.95 × 25.38
+    const rows = rowsOf(data);
+    expect(rows["eps"]).toMatchObject({ paceTolerance: 0.9, status: { state: "on-pace", onPace: true } });
+    expect((rows["eps"] as { planValue: number }).planValue).toBeCloseTo((5 * 124) / 364, 10);
+    expect(rows["asl"]).toMatchObject({ paceTolerance: 0.95, status: { state: "behind", onPace: false } });
+    expect((rows["asl"] as { planTick: number }).planTick).toBeCloseTo(0.2538, 3);
+    expect(rows["asl"]).toMatchObject({ progress: 0.24, updatedWeeksAgo: null });
+  });
+
+  it("counts year metrics on pace / year metrics in the Year to date tile", () => {
+    const data = emptyScoreboardData();
+    expect(buildScoreboardModel(sampleConfig(), data, today).yearToDate).toEqual({ achieved: 0, total: 2 });
+    data.manual.latest["eps"] = { value: 2, enteredAt: at };
+    expect(buildScoreboardModel(sampleConfig(), data, today).yearToDate).toEqual({ achieved: 1, total: 2 });
+    data.manual.latest["asl"] = { value: 30, enteredAt: at };
+    expect(buildScoreboardModel(sampleConfig(), data, today).yearToDate).toEqual({ achieved: 2, total: 2 });
+    // On 1 Jan every plan is at its baseline, so no data yet is on pace.
+    const jan1 = { year: 2027, month: 1, day: 1 };
+    expect(buildScoreboardModel(sampleConfig(), emptyScoreboardData(), jan1).yearToDate).toEqual({
+      achieved: 2,
+      total: 2,
+    });
+  });
+
+  it("flags a manual year value more than 4 weeks old, still scoring it", () => {
+    const data = emptyScoreboardData();
+    data.manual.latest["eps"] = { value: 5, enteredAt: "2027-03-24T10:00:00Z" };
+    expect(rowsOf(data)["eps"]).toMatchObject({ updatedWeeksAgo: 6, status: { state: "ahead", onPace: true } });
+  });
+});

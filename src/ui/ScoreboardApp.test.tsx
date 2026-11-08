@@ -72,3 +72,22 @@ describe("ScoreboardApp", () => {
     expect(html).not.toContain("Enter values");
   });
 });
+
+describe("ScoreboardApp: year metrics", () => {
+  it("shows value / target, a progress bar with plan tick, the pace label and the Year to date tile", () => {
+    const data = emptyScoreboardData();
+    data.manual.latest["eps"] = { value: 2, enteredAt: at };
+    data.manual.latest["asl"] = { value: 20, enteredAt: "2027-03-24T10:00:00Z" };
+    const html = render(<ScoreboardApp today={today} state={readyState({ data })} />);
+    expect(html).toContain("2 / 5");
+    expect(html).toContain("0.3 ahead of pace");
+    expect(html).toContain("20 / 100%");
+    expect(html).toContain("5.4% behind pace");
+    expect(html).toContain("updated 6 wks ago");
+    expect(html.match(/updated [0-9]+ wks? ago/g)).toHaveLength(1);
+    expect(html).toContain("scoreboard-progress__plan-tick");
+    expect(html).toContain("Year to date");
+    expect(html).toContain("1/2");
+    expect(html).toContain("year targets on pace");
+  });
+});
