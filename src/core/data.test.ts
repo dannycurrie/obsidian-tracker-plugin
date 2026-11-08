@@ -157,3 +157,36 @@ describe("readScoreboardData snapshots", () => {
     expect(data.snapshots.bad).toBeUndefined();
   });
 });
+
+describe("readScoreboardData exports", () => {
+  it("reads export records and drops unreadable parts", () => {
+    const data = readScoreboardData({
+      version: 1,
+      exports: {
+        "2027-W18": {
+          exportedAt: at,
+          week: "2027-W18",
+          weekEnded: true,
+          thisWeek: { achieved: 2, total: 5 },
+          yearToDate: { achieved: 3, total: 6 },
+          metrics: {
+            meditation: { state: "behind", label: "Missed (30 short)" },
+            bogus: { state: "sideways", label: "?" },
+          },
+        },
+        "2027-W17": { exportedAt: at, metrics: {} },
+        broken: { statuses: {} },
+      },
+    });
+    expect(data.exports["2027-W18"]).toEqual({
+      exportedAt: at,
+      week: "2027-W18",
+      weekEnded: true,
+      thisWeek: { achieved: 2, total: 5 },
+      yearToDate: { achieved: 3, total: 6 },
+      metrics: { meditation: { state: "behind", label: "Missed (30 short)" } },
+    });
+    expect(data.exports["2027-W17"]).toMatchObject({ week: "2027-W17", weekEnded: false, thisWeek: { achieved: 0, total: 0 } });
+    expect(data.exports.broken).toBeUndefined();
+  });
+});

@@ -167,4 +167,17 @@ describe("ScoreboardApp: year metrics", () => {
     expect(html).toContain("1/2");
     expect(html).toContain("year targets on pace");
   });
+
+  it("shows Export to Obsidian, naming last week on a Monday, and the block reason while the config is invalid", () => {
+    const html = render(<ScoreboardApp today={today} state={readyState()} onExport={() => {}} />);
+    expect(html).toContain(">Export to Obsidian<");
+    expect(html).toContain('title="Add week 18 to the 2027 Plan note');
+    const monday = render(<ScoreboardApp today={{ year: 2027, month: 5, day: 10 }} state={readyState()} onExport={() => {}} />);
+    expect(monday).toContain(">Export week 18<");
+    const invalid = render(
+      <ScoreboardApp today={today} state={readyState({ configProblems: [{ message: "bad", line: 3 }] })} onExport={() => {}} />,
+    );
+    expect(invalid).toContain('aria-disabled="true"');
+    expect(invalid).toContain("Export is blocked: The config file has a problem");
+  });
 });

@@ -9,6 +9,7 @@ import { GoalCards } from "./GoalCards";
 import { Header, type HeaderActions } from "./Header";
 import { Projects, ProjectNotesNeedingFix, type OpenNoteHandler } from "./Projects";
 import { buildProjectsModel, type ProjectNote } from "../core/projects";
+import { exportButtonCopy, reviewWeekFor } from "../core/report";
 
 export interface ScoreboardAppProps extends HeaderActions {
   /** Today in the config timezone (computed at the edge with calendarDateIn). */
@@ -25,12 +26,21 @@ export interface ScoreboardAppProps extends HeaderActions {
  * section lives in its own file; add a new section by creating a component
  * and adding one line here.
  */
-export function ScoreboardApp({ today, state, onRefresh, onEnterValues, projectNotes, onOpenNote }: ScoreboardAppProps) {
+export function ScoreboardApp({
+  today,
+  state,
+  onRefresh,
+  onEnterValues,
+  onExport,
+  projectNotes,
+  onOpenNote,
+}: ScoreboardAppProps) {
   const built = state.config ? buildScoreboardModel(state.config, state.data, today) : null;
   // Failed sources: their values show as stale (last good value and its age), never zero.
   const model = built ? modelWithSourceStatus(built, state.sources) : null;
   const projects = projectNotes ? buildProjectsModel(projectNotes, state.config?.goals ?? null) : null;
   const timeZone = state.config?.timezone ?? DEFAULT_TIMEZONE;
+  const validation = configValidationState(state);
   const emptyMessage =
     state.status === "loading"
       ? "Loading…"
@@ -48,9 +58,12 @@ export function ScoreboardApp({ today, state, onRefresh, onEnterValues, projectN
         refreshedAt={state.loadedAt}
         timeZone={timeZone}
         sourceErrors={sourceErrorLines(state.sources)}
+        onExport={onExport}
+        exportCopy={exportButtonCopy(reviewWeekFor(today))}
+        exportBlockedReason={validation.blockedReason}
       />
       <ProjectNotesNeedingFix notes={projects?.malformed ?? []} onOpenNote={onOpenNote} />
-      <ConfigBanner validation={configValidationState(state)} dataError={state.dataError} />
+      <ConfigBanner validation={validation} dataError={state.dataError} />
       <GoalCards goals={model?.goals ?? null} timeZone={timeZone} emptyMessage={emptyMessage} />
       <Projects projects={projects} onOpenNote={onOpenNote} />
     </div>

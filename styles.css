@@ -80,6 +80,11 @@
   gap: 8px;
 }
 
+/* Export while the config is invalid: still clickable (the notice explains), but looks unavailable. */
+.scoreboard-header__export[aria-disabled="true"] {
+  opacity: 0.55;
+}
+
 /* Config / data problems banner (ticket 06 refines) */
 .scoreboard-banner {
   padding: 8px 12px;

@@ -5,7 +5,9 @@ import { weekOfYearLabel, type IsoWeek } from "../core/week";
 export interface HeaderActions {
   onRefresh?: () => void;
   onEnterValues?: () => void;
-  // Later: onExport (ticket 09), onStartCoaching (ticket 10).
+  /** Export to Obsidian (ticket 09). */
+  onExport?: () => void;
+  // Later: onStartCoaching (ticket 10).
 }
 
 export interface HeaderProps extends HeaderActions {
@@ -21,12 +23,16 @@ export interface HeaderProps extends HeaderActions {
   timeZone?: string;
   /** One line per failing source, e.g. "Tracker: Tracker API error (HTTP 401): …". */
   sourceErrors?: readonly string[];
+  /** Export button copy: label ("Export to Obsidian" / "Export week 18" on Mondays) and tooltip. */
+  exportCopy?: { label: string; title: string };
+  /** Why export is blocked (invalid config, …); shown as the tooltip. Clicking still explains in a notice. */
+  exportBlockedReason?: string | null;
 }
 
 /**
  * Scoreboard header: title, "Week N of 52", score tiles and action buttons.
  * Also the last-refreshed time and any failing source (ticket 07).
- * Later tickets add Export (09) and Start coaching chat (10).
+ * Export to Obsidian (ticket 09); later Start coaching chat (10).
  */
 export function Header({
   week,
@@ -37,6 +43,9 @@ export function Header({
   refreshedAt,
   timeZone,
   sourceErrors,
+  onExport,
+  exportCopy,
+  exportBlockedReason,
 }: HeaderProps) {
   const refreshed = refreshedAt && timeZone ? formatInstant(refreshedAt, timeZone) : null;
   return (
@@ -64,6 +73,17 @@ export function Header({
         {onEnterValues && (
           <button type="button" class="mod-cta" onClick={onEnterValues}>
             Enter values
+          </button>
+        )}
+        {onExport && (
+          <button
+            type="button"
+            class="scoreboard-header__export"
+            aria-disabled={exportBlockedReason ? "true" : undefined}
+            title={exportBlockedReason ? `Export is blocked: ${exportBlockedReason}` : exportCopy?.title}
+            onClick={onExport}
+          >
+            {exportCopy?.label ?? "Export to Obsidian"}
           </button>
         )}
       </div>

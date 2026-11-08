@@ -20,9 +20,11 @@
  *     "latest": { "<metricId>": { "value": 4300, "enteredAt": "<ISO instant>" } }
  *   },
  *   "snapshots": { "2027-W18": WeekSnapshot },   // ticket 04
- *   "exports":   { "2027-W18": ExportRecord }    // ticket 09
+ *   "exports":   { "2027-W18": ExportRecord }    // ticket 09: last export of each week
  * }
  */
+
+import type { MetricTrackState } from "./goalBadge";
 
 export const DATA_FILE_VERSION = 1;
 
@@ -72,14 +74,31 @@ export interface WeekSnapshot {
   metrics: Record<string, WeekSnapshotMetric>;
 }
 
+/** One metric's status in an export record. */
+export interface ExportedMetricStatus {
+  /** Verdict at export time (see goalBadge.ts): "in-progress" only for a weekly metric exported while its week ran, not yet hit. */
+  state: MetricTrackState;
+  /** Status copy written to the entry, e.g. "30 to go", "Missed (30 short)", "£150 ahead of pace". */
+  label: string;
+}
+
 /**
- * Record of the last export of a week (ticket 09; used for "Changed since
- * last export"). PLACEHOLDER shape, owned by ticket 09.
+ * Record of the last export of a week (ticket 09), written with the entry;
+ * a re-export replaces it. Ticket 10 compares statuses against the most
+ * recent export of an earlier week ("Changed since last export"). Built by
+ * `exportRecordOf` (report.ts).
  */
 export interface ExportRecord {
+  /** ISO instant of the export. */
   exportedAt: string;
-  /** metricId -> status label at export time. */
-  statuses: Record<string, string>;
+  /** ISO week key of the exported (review) week; same as the record's key. */
+  week: string;
+  /** True if the week had ended at export time (a Monday export): every weekly verdict is final. */
+  weekEnded: boolean;
+  thisWeek: { achieved: number; total: number };
+  yearToDate: { achieved: number; total: number };
+  /** metricId -> status at export time. */
+  metrics: Record<string, ExportedMetricStatus>;
 }
 
 /** Typed view of the data file. */
@@ -159,9 +178,9 @@ export function readScoreboardData(doc: RawDataDocument): ScoreboardData {
     const s = readSnapshot(snap);
     if (s) data.snapshots[weekKey] = s;
   }
-  // Exports: shape owned by ticket 09; pass through objects as-is.
   for (const [weekKey, rec] of entriesOf(doc.exports)) {
-    if (isRecord(rec)) data.exports[weekKey] = rec as unknown as ExportRecord;
+    const r = readExportRecord(rec, weekKey);
+    if (r) data.exports[weekKey] = r;
   }
   return data;
 }
@@ -282,6 +301,30 @@ function readSnapshot(v: unknown): WeekSnapshot | null {
     metrics[metricId] = out;
   }
   return { frozen: v.frozen === true, updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : "", metrics };
+}
+
+const TRACK_STATES: readonly string[] = ["on-track", "behind", "in-progress", "unscored"];
+
+function readScore(v: unknown): { achieved: number; total: number } {
+  const ok = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x);
+  return isRecord(v) && ok(v.achieved) && ok(v.total) ? { achieved: v.achieved, total: v.total } : { achieved: 0, total: 0 };
+}
+
+function readExportRecord(v: unknown, weekKey: string): ExportRecord | null {
+  if (!isRecord(v) || typeof v.exportedAt !== "string" || !isRecord(v.metrics)) return null;
+  const metrics: Record<string, ExportedMetricStatus> = {};
+  for (const [metricId, m] of entriesOf(v.metrics)) {
+    if (!isRecord(m) || typeof m.state !== "string" || !TRACK_STATES.includes(m.state)) continue;
+    metrics[metricId] = { state: m.state as MetricTrackState, label: typeof m.label === "string" ? m.label : "" };
+  }
+  return {
+    exportedAt: v.exportedAt,
+    week: typeof v.week === "string" ? v.week : weekKey,
+    weekEnded: v.weekEnded === true,
+    thisWeek: readScore(v.thisWeek),
+    yearToDate: readScore(v.yearToDate),
+    metrics,
+  };
 }
 
 function entriesOf(v: unknown): [string, unknown][] {
