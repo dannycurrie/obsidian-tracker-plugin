@@ -33,4 +33,14 @@ describe("valueSourceTitle", () => {
     );
     expect(valueSourceTitle({ source: "tracker", at: "" }, "Europe/London")).toBe("Tracker");
   });
+
+  it("says when a tracker value was fetched, and when it is stale, why", () => {
+    expect(valueSourceTitle({ source: "tracker", at: "2027-05-05T10:00:00Z" }, "Europe/London")).toBe(
+      "Tracker · fetched 5 May 2027, 11:00",
+    );
+    const stale = { error: "Tracker API error (HTTP 500): internal_error" };
+    expect(valueSourceTitle({ source: "tracker", at: "2027-05-05T10:00:00Z", stale }, "Europe/London")).toBe(
+      "Tracker · last fetched 5 May 2027, 11:00 · stale: Tracker API error (HTTP 500): internal_error",
+    );
+  });
 });

@@ -431,4 +431,19 @@
 
 .scoreboard-history__week.is-no-data {
   border: 1px dashed var(--scoreboard-neutral);
+/* Ticket 07: tracker source status */
+.scoreboard-header__refreshed {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 0.85em);
+}
+
+.scoreboard-header__source-error {
+  color: var(--scoreboard-behind);
+  font-size: var(--font-ui-smaller, 0.85em);
+}
+
+.scoreboard-stale {
+  color: var(--scoreboard-behind);
+  font-size: var(--font-ui-smaller, 0.85em);
+  font-weight: normal;
 }

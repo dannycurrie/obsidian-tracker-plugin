@@ -1,11 +1,13 @@
 import { ItemView, type WorkspaceLeaf } from "obsidian";
 import { render } from "preact";
+import { createTrackerAdapter } from "../adapters/trackerAdapter";
 import { DEFAULT_TIMEZONE } from "../core/config";
 import { calendarDateIn } from "../core/week";
 import { ScoreboardApp } from "../ui/ScoreboardApp";
 import { SCOREBOARD_ICON, VIEW_TYPE_SCOREBOARD } from "./constants";
 import { DataFileRepository } from "./DataFileRepository";
 import { EnterValuesModal } from "./EnterValuesModal";
+import { obsidianHttpGet } from "./http";
 import type ScoreboardPlugin from "./main";
 import { ScoreboardStore } from "./ScoreboardStore";
 import { openProjectNote, readProjectNotes, watchProjectNotes } from "./projectNotes";
@@ -14,6 +16,8 @@ import { vaultTextIO } from "./vaultIO";
 
 /** How often the view re-renders so the week label rolls over at midnight (London). */
 const CLOCK_TICK_MS = 60_000;
+/** Auto refresh (sources, config, data) while the view is open (brief › Data sources). */
+const AUTO_REFRESH_MS = 15 * 60_000;
 
 export class ScoreboardView extends ItemView {
   private store: ScoreboardStore | null = null;
@@ -47,6 +51,13 @@ export class ScoreboardView extends ItemView {
       configPath: () => this.plugin.settings.configPath,
       data: new DataFileRepository(io, () => this.plugin.settings.dataFilePath),
       now: () => new Date(),
+      adapters: [
+        createTrackerAdapter({
+          http: obsidianHttpGet,
+          apiUrl: () => this.plugin.settings.trackerApiUrl,
+          apiKey: () => this.plugin.trackerApiKey.get(),
+        }),
+      ],
     });
     this.store = store;
     this.unsubscribe = store.subscribe(() => this.renderApp());
@@ -57,6 +68,7 @@ export class ScoreboardView extends ItemView {
     void projects.reload();
     this.renderApp();
     this.registerInterval(window.setInterval(() => this.renderApp(), CLOCK_TICK_MS));
+    this.registerInterval(window.setInterval(() => void this.reload(), AUTO_REFRESH_MS));
     await store.reload();
   }
 

@@ -14,7 +14,11 @@ export interface ScoreboardSettings {
   projectsFolder: string;
   /** Base URL of the tracker Metrics API. */
   trackerApiUrl: string;
-  /** Tracker API key. Plain setting for now; ticket 07 moves it to secret storage when available. */
+  /**
+   * Tracker API key, only used when Obsidian has no secret storage (before
+   * 1.11.4); otherwise empty and the key is in `app.secretStorage`
+   * (src/obsidian/trackerApiKey.ts).
+   */
   trackerApiKey: string;
   /** URL of the ongoing coaching chat on claude.ai. Empty means not set yet. */
   coachingChatUrl: string;

@@ -1,3 +1,4 @@
+import { formatInstant } from "../core/format";
 import { formatScore, type Score } from "../core/score";
 import { weekOfYearLabel, type IsoWeek } from "../core/week";
 
@@ -14,20 +15,41 @@ export interface HeaderProps extends HeaderActions {
   thisWeek?: Score;
   /** "Year to date" tile; omitted while there is no config. */
   yearToDate?: Score;
-  // Ticket 07: last-refreshed date.
+  /** ISO instant of the last finished refresh; null before the first. */
+  refreshedAt?: string | null;
+  /** Timezone for the refreshed time. */
+  timeZone?: string;
+  /** One line per failing source, e.g. "Tracker: Tracker API error (HTTP 401): …". */
+  sourceErrors?: readonly string[];
 }
 
 /**
  * Scoreboard header: title, "Week N of 52", score tiles and action buttons.
- * Later tickets add the last-refreshed date (07),
- * Export (09) and Start coaching chat (10).
+ * Also the last-refreshed time and any failing source (ticket 07).
+ * Later tickets add Export (09) and Start coaching chat (10).
  */
-export function Header({ week, thisWeek, yearToDate, onRefresh, onEnterValues }: HeaderProps) {
+export function Header({
+  week,
+  thisWeek,
+  yearToDate,
+  onRefresh,
+  onEnterValues,
+  refreshedAt,
+  timeZone,
+  sourceErrors,
+}: HeaderProps) {
+  const refreshed = refreshedAt && timeZone ? formatInstant(refreshedAt, timeZone) : null;
   return (
     <header class="scoreboard-header">
       <div class="scoreboard-header__titles">
         <h1 class="scoreboard-header__title">2027 Scoreboard</h1>
         <div class="scoreboard-header__week">{weekOfYearLabel(week)}</div>
+        {refreshed && <div class="scoreboard-header__refreshed">Refreshed {refreshed}</div>}
+        {sourceErrors?.map((e, i) => (
+          <div key={i} class="scoreboard-header__source-error" role="status">
+            {e} Showing the last good values, marked stale.
+          </div>
+        ))}
       </div>
       <div class="scoreboard-header__tiles">
         {thisWeek && <ScoreTile label="This week" score={thisWeek} caption="weekly targets hit" />}

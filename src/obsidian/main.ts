@@ -3,12 +3,17 @@ import { resolveSettings, type ScoreboardSettings } from "../core/settings";
 import { SCOREBOARD_ICON, VIEW_TYPE_SCOREBOARD } from "./constants";
 import { ScoreboardSettingTab } from "./SettingsTab";
 import { ScoreboardView } from "./ScoreboardView";
+import { secretStorageOf, TrackerApiKey } from "./trackerApiKey";
 
 export default class ScoreboardPlugin extends Plugin {
   settings!: ScoreboardSettings;
+  /** The Tracker API key: Obsidian's secret storage when available, else settings. */
+  trackerApiKey!: TrackerApiKey;
 
   async onload(): Promise<void> {
     await this.loadSettings();
+    this.trackerApiKey = new TrackerApiKey(secretStorageOf(this.app), this.settings, () => this.saveSettings());
+    await this.trackerApiKey.migrate();
 
     this.registerView(VIEW_TYPE_SCOREBOARD, (leaf) => new ScoreboardView(leaf, this));
 

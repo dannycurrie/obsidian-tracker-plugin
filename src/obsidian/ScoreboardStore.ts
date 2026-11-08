@@ -4,9 +4,11 @@
  * injected), so it is unit-tested with fakes.
  *
  * Extension points:
- * - `reload()` is what Refresh calls. After config + data are loaded it runs
- *   the week snapshot step (ticket 04, `snapshotStep`); ticket 07 (tracker)
- *   adds its fetch step before it.
+ * - `reload()` is what Refresh (and the view's open and 15-minute timer)
+ *   calls. After config + data are loaded it runs the source adapters
+ *   (`sourcesStep`, ticket 07: e.g. the tracker fetch writes week values into
+ *   snapshots), then the week snapshot step (ticket 04, `snapshotStep`).
+ *   Overlapping calls share the reload in flight.
  * - `updateData(patch)` is the only way to write the data file.
  * - `loadConfig` is injectable; it defaults to full validation
  *   (`validateConfigText`, core/configValidation.ts).
@@ -22,10 +24,12 @@
  *   until the same adapter reports again; pass [] once the problem is gone.
  */
 import { parseYamlSource, type ConfigLoadResult, type ConfigProblem } from "../core/configLoad";
+import type { SourceAdapter, SourceRefreshResult } from "../adapters/types";
 import { resolveSourceProblems, type SourceProblem } from "../core/configStatus";
 import { validateConfigText } from "../core/configValidation";
 import type { DataPatch } from "../core/data";
 import { snapshotRefreshPatch } from "../core/snapshots";
+import type { SourceStatus } from "../core/sources";
 import { calendarDateIn } from "../core/week";
 import { initialScoreboardState, type ScoreboardState } from "../core/viewState";
 import type { DataFileRepository } from "./DataFileRepository";
@@ -39,6 +43,8 @@ export interface ScoreboardStoreDeps {
   data: DataFileRepository;
   now: () => Date;
   loadConfig?: (text: string) => ConfigLoadResult;
+  /** Source adapters run on every reload (ticket 07). Default none. */
+  adapters?: readonly SourceAdapter[];
 }
 
 export type Listener = (state: ScoreboardState) => void;
@@ -52,6 +58,7 @@ export class ScoreboardStore {
   private configText: string | null = null;
   /** adapterId -> problems it reported (ticket 07). */
   private readonly sourceProblems = new Map<string, readonly SourceProblem[]>();
+  private inflight: Promise<void> | null = null;
 
   constructor(private readonly deps: ScoreboardStoreDeps) {
     this.loadConfig = deps.loadConfig ?? validateConfigText;
@@ -67,8 +74,20 @@ export class ScoreboardStore {
     return () => this.listeners.delete(listener);
   }
 
-  /** Re-reads the config and data files. Never throws; errors land in state. */
-  async reload(): Promise<void> {
+  /**
+   * Re-reads the config and data files and refreshes the sources. Never
+   * throws; errors land in state. A call while one is running shares it.
+   */
+  reload(): Promise<void> {
+    if (!this.inflight) {
+      this.inflight = this.doReload().finally(() => {
+        this.inflight = null;
+      });
+    }
+    return this.inflight;
+  }
+
+  private async doReload(): Promise<void> {
     const next: Partial<ScoreboardState> = {};
     const path = this.deps.configPath();
     try {
@@ -95,6 +114,7 @@ export class ScoreboardStore {
     } catch (e) {
       next.dataError = (e as Error).message;
     }
+    await this.sourcesStep(next);
     const configValid = next.configValid ?? this.state.configValid;
     const fileBroken = this.fileProblems.length > 0 || (next.configError ?? this.state.configError) !== null;
     Object.assign(next, { configProblems: this.mergedProblems(), usingLastValidConfig: fileBroken && configValid });
@@ -119,6 +139,49 @@ export class ScoreboardStore {
     if (fromSources.length === 0) return this.fileProblems;
     const source = this.configText === null ? null : parseYamlSource(this.configText);
     return [...this.fileProblems, ...resolveSourceProblems(source, fromSources)];
+  }
+
+  /**
+   * Source adapters (ticket 07): each one reads its source and writes what
+   * it read into the data file before the snapshot step. Records each
+   * adapter's status (keeping the last successful fetch time when one fails)
+   * and replaces its runtime config problems unless it couldn't tell.
+   * Skipped without a valid config or a readable data file.
+   */
+  private async sourcesStep(next: Partial<ScoreboardState>): Promise<void> {
+    const adapters = this.deps.adapters ?? [];
+    const config = next.config ?? this.state.config;
+    const valid = next.configValid ?? this.state.configValid;
+    if (adapters.length === 0 || !config || !valid || !next.data || next.dataError) return;
+    const sources: Record<string, SourceStatus> = { ...this.state.sources };
+    for (const adapter of adapters) {
+      const now = this.deps.now();
+      const result: SourceRefreshResult = await adapter.refresh({ config, data: next.data, now }).catch((e: unknown) => ({
+        status: { ok: false, error: e instanceof Error ? e.message : String(e), failedAt: now.toISOString(), lastFetchedAt: null },
+        patch: [],
+        problems: null,
+      }));
+      if (result.problems) {
+        if (result.problems.length === 0) this.sourceProblems.delete(adapter.id);
+        else this.sourceProblems.set(adapter.id, result.problems);
+      }
+      const status = result.status;
+      if (!status) delete sources[adapter.id];
+      else if (status.ok) sources[adapter.id] = status;
+      else {
+        const prev = sources[adapter.id];
+        const lastFetchedAt = prev ? (prev.ok ? prev.fetchedAt : prev.lastFetchedAt) : null;
+        sources[adapter.id] = { ...status, lastFetchedAt: status.lastFetchedAt ?? lastFetchedAt };
+      }
+      if (result.patch.length === 0) continue;
+      try {
+        next.data = (await this.deps.data.update(result.patch)).data;
+      } catch (e) {
+        next.dataError = (e as Error).message;
+        break;
+      }
+    }
+    next.sources = sources;
   }
 
   /**
