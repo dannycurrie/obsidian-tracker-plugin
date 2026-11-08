@@ -4,9 +4,10 @@
  */
 import { formatValue, formatValueOverTarget, NO_VALUE, valueSourceTitle } from "../core/format";
 import type { MetricRowModel, UntargetedRowModel, WeeklyRowModel, YearRowModel } from "../core/model";
+import { trendChangeLabel } from "../core/trend";
 import { weeklyStatusLabel } from "../core/weeklyScoring";
 import { updatedWeeksAgoLabel, yearStatusLabel } from "../core/yearScoring";
-import { HistoryStrip } from "./HistoryStrip";
+import { HistoryStrip, TrendStrip } from "./HistoryStrip";
 
 export function MetricRow({ row, timeZone }: { row: MetricRowModel; timeZone: string }) {
   switch (row.kind) {
@@ -85,16 +86,20 @@ export function YearMetricRow({ row, timeZone }: RowProps<YearRowModel>) {
   );
 }
 
-/** PLACEHOLDER for ticket 05: value and "no target set". */
+/** Untargeted row: value, change against 4 weeks ago, uncoloured strip, "no target set"; no bar. */
 export function UntargetedMetricRow({ row, timeZone }: RowProps<UntargetedRowModel>) {
-  const { metric, value } = row;
+  const { metric, value, change } = row;
   return (
     <li class="scoreboard-metric scoreboard-metric--untargeted is-neutral" data-metric-id={metric.id}>
       <div class="scoreboard-metric__label">{metric.label}</div>
       <div class="scoreboard-metric__value" title={value ? valueSourceTitle(value, timeZone) : "No value yet"}>
         {value ? formatValue(value.value, metric.unit) : NO_VALUE}
       </div>
-      <div class="scoreboard-metric__status">no target set</div>
+      <TrendStrip weeks={row.history} unit={metric.unit} />
+      <div class="scoreboard-metric__status">
+        {change && <span class="scoreboard-metric__change">{trendChangeLabel(change, metric.unit)} · </span>}
+        no target set
+      </div>
     </li>
   );
 }

@@ -4,6 +4,7 @@
  */
 import type { GoalConfig, MetricConfig, ScoreboardConfig } from "./config";
 import type { ScoreboardData } from "./data";
+import { goalBadge, type GoalBadge } from "./goalBadge";
 import { buildUntargetedRow } from "./rows/untargetedRow";
 import { buildWeeklyRow } from "./rows/weeklyRow";
 import { buildYearRow } from "./rows/yearRow";
@@ -18,7 +19,8 @@ export type { MetricRowModel, RowContext, UntargetedRowModel, WeeklyRowModel, Ye
 export interface GoalCardModel {
   goal: GoalConfig;
   rows: MetricRowModel[];
-  // Ticket 05: "x / y on track" badge and colour go here.
+  /** "x / y on track" badge and its colour (untargeted metrics left out). */
+  badge: GoalBadge;
 }
 
 export interface ScoreboardModel {
@@ -50,7 +52,10 @@ export function buildScoreboardModel(
 ): ScoreboardModel {
   const week = isoWeekOf(today);
   const ctx: RowContext = { config, data, today, week, weekKey: isoWeekKey(week) };
-  const goals = config.goals.map((goal) => ({ goal, rows: goal.metrics.map((m) => buildMetricRow(m, ctx)) }));
+  const goals = config.goals.map((goal): GoalCardModel => {
+    const rows = goal.metrics.map((m) => buildMetricRow(m, ctx));
+    return { goal, rows, badge: goalBadge(rows) };
+  });
   const weeklyRows = goals.flatMap((g) => g.rows).filter((r): r is WeeklyRowModel => r.kind === "weekly");
   const yearRows = goals.flatMap((g) => g.rows).filter((r): r is YearRowModel => r.kind === "year");
   return {

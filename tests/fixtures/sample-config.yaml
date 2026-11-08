@@ -33,6 +33,12 @@ goals:
         target: 100
         unit: min
         source: { type: tracker, metric: "00000000-0000-0000-0000-000000000001", aggregate: sum }
+      - id: resting-hr
+        label: Resting heart rate
+        kind: untargeted
+        level: true
+        unit: bpm
+        source: { type: manual, cadence: ad-hoc }
   - id: creative
     name: Creative
     statement: Put more music out into the world

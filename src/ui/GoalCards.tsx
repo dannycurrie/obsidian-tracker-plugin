@@ -1,3 +1,4 @@
+import { goalBadgeLabel, type BadgeTone } from "../core/goalBadge";
 import type { GoalCardModel } from "../core/model";
 import { MetricRow } from "./MetricRows";
 
@@ -27,13 +28,16 @@ export function GoalCards({ goals, timeZone, emptyMessage }: GoalCardsProps) {
   );
 }
 
+/** Badge colour class: blue all on track, orange none on track and some behind, grey otherwise. */
+const BADGE_CLASS: Record<BadgeTone, string> = { "on-track": "is-on-track", behind: "is-behind", neutral: "is-neutral" };
+
 export function GoalCard({ card, timeZone }: { card: GoalCardModel; timeZone: string }) {
-  const { goal, rows } = card;
+  const { goal, rows, badge } = card;
   return (
     <article class="scoreboard-goal" data-goal-id={goal.id}>
       <header class="scoreboard-goal__header">
         <h2 class="scoreboard-goal__name">{goal.name}</h2>
-        {/* Ticket 05: "x / y on track" badge goes here. */}
+        <span class={`scoreboard-goal__badge ${BADGE_CLASS[badge.tone]}`}>{goalBadgeLabel(badge)}</span>
       </header>
       {goal.statement && <p class="scoreboard-goal__statement">{goal.statement}</p>}
       {rows.length > 0 ? (

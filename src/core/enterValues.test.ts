@@ -19,7 +19,7 @@ function dataWithHistory() {
 describe("buildEnterValuesFields", () => {
   it("lists only manual metrics, in config order", () => {
     const fields = buildEnterValuesFields(sampleConfig(), emptyScoreboardData(), week);
-    expect(fields.map((f) => f.metricId)).toEqual(["tengu-wau", "asl", "music-practice", "eps", "gigs"]);
+    expect(fields.map((f) => f.metricId)).toEqual(["tengu-wau", "asl", "resting-hr", "music-practice", "eps", "gigs"]);
     expect(fields.map((f) => f.metricId)).not.toContain("meditation");
   });
 

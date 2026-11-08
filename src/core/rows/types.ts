@@ -6,6 +6,7 @@
 import type { ScoreboardConfig, UntargetedMetricConfig, WeeklyMetricConfig, YearMetricConfig } from "../config";
 import type { ScoreboardData } from "../data";
 import type { HistoryWeek } from "../history";
+import type { TrendChange, TrendWeek } from "../trend";
 import type { MetricValue } from "../values";
 import type { CalendarDate, IsoWeek } from "../week";
 import type { WeeklyStatus } from "../weeklyScoring";
@@ -55,11 +56,16 @@ export interface YearRowModel {
   updatedWeeksAgo: number | null;
 }
 
-/** PLACEHOLDER for ticket 05 (4-week change, uncoloured strip). */
+/** An untargeted metric: value and trend, no target, never scored. */
 export interface UntargetedRowModel {
   kind: "untargeted";
   metric: UntargetedMetricConfig;
+  /** This week's value (per-week metrics) or the latest (ad hoc); null = no data. */
   value: MetricValue | null;
+  /** The value now minus the value 4 weeks ago; null when either is missing. */
+  change: TrendChange | null;
+  /** The last 8 completed weeks, oldest first, without verdicts; none before the first week with data. */
+  history: TrendWeek[];
 }
 
 export type MetricRowModel = WeeklyRowModel | YearRowModel | UntargetedRowModel;

@@ -402,3 +402,33 @@
   color: var(--scoreboard-neutral);
   font-weight: normal;
 }
+
+/* Goal badge (ticket 05): "x / y on track"; blue / orange / grey, always with words */
+.scoreboard-goal__badge {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: var(--font-ui-smaller, 0.85em);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--scoreboard-neutral);
+}
+
+.scoreboard-goal__badge.is-on-track {
+  color: var(--scoreboard-on-track);
+}
+
+.scoreboard-goal__badge.is-behind {
+  color: var(--scoreboard-behind);
+}
+
+/* Untargeted strip (ticket 05): the same squares with no hit/miss colouring */
+.scoreboard-history__week.is-neutral {
+  background: var(--scoreboard-neutral);
+  opacity: 0.6;
+}
+
+.scoreboard-history__week.is-no-data {
+  border: 1px dashed var(--scoreboard-neutral);
+}

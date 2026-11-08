@@ -14,7 +14,7 @@ describe("EnterValuesForm", () => {
     data.manual.latest["eps"] = { value: 1, enteredAt: "x" };
     const fields = buildEnterValuesFields(sampleConfig(), data, week);
     const html = render(<EnterValuesForm week={week} fields={fields} onSave={async () => ({})} onCancel={() => {}} />);
-    expect(html.match(/<input/g)).toHaveLength(5);
+    expect(html.match(/<input/g)).toHaveLength(6);
     expect(html).not.toContain("Meditation");
     expect(html).toContain("last week: 45 min");
     expect(html).toMatch(/id="scoreboard-enter-music-practice"[^>]*value( |="")/);

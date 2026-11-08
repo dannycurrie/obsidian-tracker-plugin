@@ -43,6 +43,39 @@ describe("buildScoreboardModel", () => {
   });
 });
 
+describe("buildScoreboardModel: untargeted metrics", () => {
+  const rowsOf = (data: ReturnType<typeof emptyScoreboardData>) =>
+    Object.fromEntries(buildScoreboardModel(sampleConfig(), data, today).goals.flatMap((g) => g.rows).map((r) => [r.metric.id, r]));
+
+  it("are excluded from both header scores and from badges, whatever their values", () => {
+    const empty = buildScoreboardModel(sampleConfig(), emptyScoreboardData(), today);
+    const data = emptyScoreboardData();
+    data.manual.weekly["gigs"] = { "2027-W18": { value: 9, enteredAt: at } };
+    data.manual.latest["resting-hr"] = { value: 50, enteredAt: at };
+    const model = buildScoreboardModel(sampleConfig(), data, today);
+    expect(model.thisWeek).toEqual(empty.thisWeek);
+    expect(model.thisWeek.total).toBe(3);
+    expect(model.yearToDate).toEqual(empty.yearToDate);
+    expect(model.yearToDate.total).toBe(2);
+    const badges = Object.fromEntries(model.goals.map((g) => [g.goal.id, g.badge]));
+    expect(badges["self"]).toMatchObject({ scored: 1 });
+    expect(badges["creative"]).toMatchObject({ scored: 2 });
+  });
+
+  it("build value, change against 4 weeks ago and an uncoloured strip", () => {
+    const data = emptyScoreboardData();
+    data.manual.weekly["gigs"] = {
+      "2027-W14": { value: 1, enteredAt: at },
+      "2027-W18": { value: 3, enteredAt: at },
+    };
+    data.manual.latest["resting-hr"] = { value: 52, enteredAt: at };
+    const rows = rowsOf(data);
+    expect(rows["gigs"]).toMatchObject({ kind: "untargeted", value: { value: 3 }, change: { delta: 2, direction: "up" } });
+    expect((rows["gigs"] as { history: unknown[] }).history).toHaveLength(4); // W14–W17
+    expect(rows["resting-hr"]).toMatchObject({ value: { value: 52 }, change: null, history: [] });
+  });
+});
+
 describe("buildScoreboardModel: year metrics", () => {
   // 5 May 2027 is day 124: linear EPs plan 5 × 124/364 ≈ 1.70; ASL quarterly 10 + 40 × 35/91 ≈ 25.38%.
   const rowsOf = (data = emptyScoreboardData()) =>

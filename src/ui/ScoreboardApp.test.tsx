@@ -115,6 +115,39 @@ describe("ScoreboardApp", () => {
     const html = render(<ScoreboardApp today={today} state={readyState({ config: null })} onEnterValues={() => {}} />);
     expect(html).not.toContain("Enter values");
   });
+
+  it("shows an 'x / y on track' badge on each goal card, coloured and worded", () => {
+    const data = emptyScoreboardData();
+    data.manual.weekly["music-practice"] = { "2027-W18": { value: 60, enteredAt: at } };
+    data.manual.latest["eps"] = { value: 2, enteredAt: at };
+    data.manual.latest["asl"] = { value: 0, enteredAt: at };
+    const html = render(<ScoreboardApp today={today} state={readyState({ data })} />);
+    expect(html).toContain('<span class="scoreboard-goal__badge is-on-track">2 / 2 on track</span>'); // creative
+    expect(html).toContain('<span class="scoreboard-goal__badge is-behind">0 / 2 on track</span>'); // career
+    expect(html).toContain('<span class="scoreboard-goal__badge is-neutral">0 / 1 on track</span>'); // self
+  });
+
+  it("renders an untargeted metric with its value, 4-week change, uncoloured strip and 'no target set'", () => {
+    const data = emptyScoreboardData();
+    data.manual.weekly["gigs"] = {
+      "2027-W14": { value: 1, enteredAt: at },
+      "2027-W16": { value: 2, enteredAt: at },
+      "2027-W18": { value: 3, enteredAt: at },
+    };
+    const html = render(<ScoreboardApp today={today} state={readyState({ data })} />);
+    const row = html.slice(html.indexOf('data-metric-id="gigs"'));
+    expect(row).toContain("↑ 2 vs 4 wks ago");
+    expect(row).toContain("no target set");
+    expect(row).toContain('aria-label="Last 4 weeks, no target set"');
+    expect(row).toContain('title="Week 15: no data"');
+    expect(row).toContain('title="Week 16: 2"');
+    expect(row).not.toMatch(/is-hit|is-missed|scoreboard-progress/);
+    // The ad-hoc one with no data: value placeholder, no change, no strip.
+    const hr = html.slice(html.indexOf('data-metric-id="resting-hr"'), html.indexOf('data-goal-id="creative"'));
+    expect(hr).toContain("no target set");
+    expect(hr).not.toContain("wks ago");
+    expect(hr).not.toContain("scoreboard-history");
+  });
 });
 
 describe("ScoreboardApp: year metrics", () => {
