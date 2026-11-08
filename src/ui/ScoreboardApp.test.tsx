@@ -60,11 +60,36 @@ describe("ScoreboardApp", () => {
     const html = render(
       <ScoreboardApp
         today={today}
-        state={readyState({ configProblems: [{ message: "Metric \"x\": `target` must be a number.", line: 12 }] })}
+        state={readyState({
+          configProblems: [{ message: "Metric \"x\": `target` must be a number.", line: 12 }],
+          usingLastValidConfig: true,
+        })}
       />,
     );
+    expect(html).toContain("The config file has a problem.");
     expect(html).toContain("Line 12:");
     expect(html).toContain("showing the last valid config");
+    expect(html).toContain("export is blocked");
+  });
+
+  it("shows no banner for a valid config", () => {
+    const html = render(<ScoreboardApp today={today} state={readyState()} />);
+    expect(html).not.toContain("scoreboard-banner");
+  });
+
+  it("explains an unreadable config file", () => {
+    const html = render(<ScoreboardApp today={today} state={readyState({ configError: 'No config file at "x".' })} />);
+    expect(html).toContain('No config file at &quot;x&quot;.');
+    expect(html).toContain("Export is blocked until it is fixed.");
+  });
+
+  it("warns about history for metric ids no longer in the config", () => {
+    const data = emptyScoreboardData();
+    data.manual.weekly["practice"] = { "2027-W17": { value: 30, enteredAt: at } };
+    const html = render(<ScoreboardApp today={today} state={readyState({ data })} />);
+    expect(html).toContain("The data file has history for a metric id not in the");
+    expect(html).toContain("practice: 1 weekly entry");
+    expect(html).not.toContain('role="alert"');
   });
 
   it("hides Enter values while there is no config", () => {

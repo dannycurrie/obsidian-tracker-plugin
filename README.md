@@ -18,6 +18,7 @@ npm run typecheck  # tsc --noEmit
 
 - `src/core/` — pure domain logic. Never imports `obsidian` and never reads the clock (callers pass `today` / timestamps). Tests sit next to the code as `*.test.ts`.
   - `config.ts` config schema types; `configLoad.ts` YAML text → config with line-numbered problems (`yaml` package).
+  - `configValidation.ts` full validation (`validateConfigText`, what the store loads with); `configStatus.ts` the derived validation state (`configValidationState`: features such as export refuse to run while `blocksActions`), orphaned-history warnings, and `SourceProblem` for adapters reporting config problems at runtime via `ScoreboardStore.setSourceProblems`.
   - `data.ts` data file schema (versioned), tolerant reading, and `applyDataPatch` (patch the latest document, touching only patched fields).
   - `values.ts` metric values from sources; `weeklyScoring.ts` hit rule and This week score; `model.ts` + `rows/` the view model, one row builder per metric kind.
   - `enterValues.ts` Enter values form fields and submission → patch; `format.ts` number/unit copy; `week.ts` ISO weeks.

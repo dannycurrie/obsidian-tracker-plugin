@@ -7,13 +7,22 @@
  * - `reload()` is what Refresh calls. Ticket 04 (snapshots) and 07 (tracker)
  *   hook in after config + data are loaded; add steps there.
  * - `updateData(patch)` is the only way to write the data file.
- * - `loadConfig` is injectable; ticket 06 can pass its validating loader.
+ * - `loadConfig` is injectable; it defaults to full validation
+ *   (`validateConfigText`, core/configValidation.ts).
  *   Config rule: a config with no problems becomes the current config; one
  *   with problems is shown only if there is no earlier valid config
  *   (otherwise the last valid config is kept). `configProblems` always lists
- *   the current file's problems.
+ *   the current file's problems, then source-adapter problems.
+ * - `setSourceProblems(adapterId, problems)` (ticket 07 hook): an adapter
+ *   reports config problems it can only find at runtime, e.g. an unknown
+ *   tracker metric id with the list of available ids. They are given line
+ *   numbers from the current config file, merged into `configProblems` (so
+ *   the banner lists them and `configValidationState` blocks export) and kept
+ *   until the same adapter reports again; pass [] once the problem is gone.
  */
-import { loadConfigFromYaml, type ConfigLoadResult } from "../core/configLoad";
+import { parseYamlSource, type ConfigLoadResult, type ConfigProblem } from "../core/configLoad";
+import { resolveSourceProblems, type SourceProblem } from "../core/configStatus";
+import { validateConfigText } from "../core/configValidation";
 import type { DataPatch } from "../core/data";
 import { initialScoreboardState, type ScoreboardState } from "../core/viewState";
 import type { DataFileRepository } from "./DataFileRepository";
@@ -35,9 +44,14 @@ export class ScoreboardStore {
   private state: ScoreboardState = initialScoreboardState();
   private readonly listeners = new Set<Listener>();
   private readonly loadConfig: (text: string) => ConfigLoadResult;
+  /** Problems in the config file as last read, and its text (for source-problem lines). */
+  private fileProblems: ConfigProblem[] = [];
+  private configText: string | null = null;
+  /** adapterId -> problems it reported (ticket 07). */
+  private readonly sourceProblems = new Map<string, readonly SourceProblem[]>();
 
   constructor(private readonly deps: ScoreboardStoreDeps) {
-    this.loadConfig = deps.loadConfig ?? loadConfigFromYaml;
+    this.loadConfig = deps.loadConfig ?? validateConfigText;
   }
 
   getState(): ScoreboardState {
@@ -57,12 +71,15 @@ export class ScoreboardStore {
     try {
       const text = await this.deps.io.read(path);
       if (text === null) {
-        Object.assign(next, { configError: `No config file at "${path}". Set the path in settings or create the file.`, configProblems: [] });
+        Object.assign(next, { configError: `No config file at "${path}". Set the path in settings or create the file.` });
+        this.fileProblems = [];
+        this.configText = null;
       } else {
         const result = this.loadConfig(text);
         const valid = result.config !== null && result.problems.length === 0;
         next.configError = null;
-        next.configProblems = result.problems;
+        this.fileProblems = result.problems;
+        this.configText = text;
         if (valid) Object.assign(next, { config: result.config, configValid: true });
         else if (!this.state.configValid) next.config = result.config ?? this.state.config;
       }
@@ -75,7 +92,29 @@ export class ScoreboardStore {
     } catch (e) {
       next.dataError = (e as Error).message;
     }
+    const configValid = next.configValid ?? this.state.configValid;
+    const fileBroken = this.fileProblems.length > 0 || (next.configError ?? this.state.configError) !== null;
+    Object.assign(next, { configProblems: this.mergedProblems(), usingLastValidConfig: fileBroken && configValid });
     this.set({ ...next, status: "ready", loadedAt: this.deps.now().toISOString() });
+  }
+
+  /**
+   * Ticket 07 hook: replaces the config problems `adapterId` found at
+   * runtime (e.g. unknown tracker metric id). Pass [] when they are fixed.
+   * See the module doc.
+   */
+  setSourceProblems(adapterId: string, problems: readonly SourceProblem[]): void {
+    if (problems.length === 0) this.sourceProblems.delete(adapterId);
+    else this.sourceProblems.set(adapterId, problems);
+    this.set({ configProblems: this.mergedProblems() });
+  }
+
+  /** The current file's problems, then every adapter's (with lines from the current file). */
+  private mergedProblems(): ConfigProblem[] {
+    const fromSources = [...this.sourceProblems.values()].flat();
+    if (fromSources.length === 0) return this.fileProblems;
+    const source = this.configText === null ? null : parseYamlSource(this.configText);
+    return [...this.fileProblems, ...resolveSourceProblems(source, fromSources)];
   }
 
   /**
