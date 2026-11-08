@@ -45,7 +45,21 @@ describe("metric values", () => {
     expect(metricCurrentValue(findMetric(config, "eps")!, data, "2027-W18")?.value).toBe(1);
   });
 
-  it("has no value for tracker metrics yet", () => {
+  it("has no value for a tracker metric with nothing fetched for the week", () => {
     expect(metricCurrentValue(findMetric(config, "meditation")!, data, "2027-W18")).toBeNull();
+  });
+
+  it("reads a tracker week value from its week snapshot, with source and fetch time", () => {
+    const d = emptyScoreboardData();
+    d.snapshots["2027-W18"] = {
+      frozen: false,
+      updatedAt: "2027-05-05T10:00:00Z",
+      metrics: { meditation: { value: 70, target: 100, source: "tracker", fetchedAt: "2027-05-05T09:00:00Z" } },
+    };
+    expect(metricWeekValue(findMetric(config, "meditation")!, d, "2027-W18")).toEqual({
+      value: 70,
+      source: "tracker",
+      at: "2027-05-05T09:00:00Z",
+    });
   });
 });

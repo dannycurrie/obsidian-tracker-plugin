@@ -402,3 +402,20 @@
   color: var(--scoreboard-neutral);
   font-weight: normal;
 }
+
+/* Ticket 07: tracker source status */
+.scoreboard-header__refreshed {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 0.85em);
+}
+
+.scoreboard-header__source-error {
+  color: var(--scoreboard-behind);
+  font-size: var(--font-ui-smaller, 0.85em);
+}
+
+.scoreboard-stale {
+  color: var(--scoreboard-behind);
+  font-size: var(--font-ui-smaller, 0.85em);
+  font-weight: normal;
+}

@@ -47,6 +47,10 @@ export class ScoreboardSettingTab extends PluginSettingTab {
     });
 
     for (const spec of SPECS) {
+      if (spec.key === "trackerApiKey") {
+        this.addTrackerApiKey(containerEl, spec);
+        continue;
+      }
       const setting = new Setting(containerEl).setName(spec.name).setDesc(spec.desc);
       const onChange = async (value: string) => {
         this.plugin.settings[spec.key] = value;
@@ -64,5 +68,22 @@ export class ScoreboardSettingTab extends PluginSettingTab {
         });
       }
     }
+  }
+
+  /** The API key: Obsidian's secret storage when this version has it, else this plugin's data.json. */
+  private addTrackerApiKey(containerEl: HTMLElement, spec: TextSettingSpec): void {
+    const key = this.plugin.trackerApiKey;
+    const desc = key.usesSecretStorage
+      ? "Bearer key for the tracker Metrics API. Stored in Obsidian's secret storage, not in the vault folder or any note; you may need to enter it on each device."
+      : spec.desc;
+    new Setting(containerEl)
+      .setName(spec.name)
+      .setDesc(desc)
+      .addText((text) => {
+        text.setPlaceholder("Paste the API key").setValue(key.get()).onChange(async (value) => {
+          await key.set(value.trim());
+        });
+        text.inputEl.type = "password";
+      });
   }
 }

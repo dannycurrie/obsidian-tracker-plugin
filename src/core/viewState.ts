@@ -5,6 +5,7 @@
 import type { ScoreboardConfig } from "./config";
 import type { ConfigProblem } from "./configLoad";
 import { emptyScoreboardData, type ScoreboardData } from "./data";
+import type { SourceStatuses } from "./sources";
 
 export interface ScoreboardState {
   /** "loading" until the first reload() finishes. */
@@ -29,6 +30,8 @@ export interface ScoreboardState {
   dataError: string | null;
   /** ISO instant of the last finished reload. */
   loadedAt: string | null;
+  /** adapterId -> outcome of its last refresh (ticket 07); failed sources show their values stale. */
+  sources: SourceStatuses;
 }
 
 export function initialScoreboardState(): ScoreboardState {
@@ -42,5 +45,6 @@ export function initialScoreboardState(): ScoreboardState {
     data: emptyScoreboardData(),
     dataError: null,
     loadedAt: null,
+    sources: {},
   };
 }

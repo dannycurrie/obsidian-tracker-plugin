@@ -7,6 +7,7 @@ import type { MetricRowModel, UntargetedRowModel, WeeklyRowModel, YearRowModel }
 import { weeklyStatusLabel } from "../core/weeklyScoring";
 import { updatedWeeksAgoLabel, yearStatusLabel } from "../core/yearScoring";
 import { HistoryStrip } from "./HistoryStrip";
+import { StaleBadge } from "./StaleBadge";
 
 export function MetricRow({ row, timeZone }: { row: MetricRowModel; timeZone: string }) {
   switch (row.kind) {
@@ -43,6 +44,7 @@ export function WeeklyMetricRow({ row, timeZone }: RowProps<WeeklyRowModel>) {
       <div class="scoreboard-metric__label">{metric.label}</div>
       <div class="scoreboard-metric__value" title={value ? valueSourceTitle(value, timeZone) : "No value this week"}>
         {formatValueOverTarget(value?.value ?? null, metric.target, metric.unit)}
+        <StaleBadge value={value} />
       </div>
       <HistoryStrip weeks={row.history} unit={metric.unit} />
       <div class="scoreboard-metric__status">{weeklyStatusLabel(status, row.streak)}</div>
@@ -65,6 +67,7 @@ export function YearMetricRow({ row, timeZone }: RowProps<YearRowModel>) {
       <div class="scoreboard-metric__label">{metric.label}</div>
       <div class="scoreboard-metric__value" title={value ? valueSourceTitle(value, timeZone) : "No value yet"}>
         {formatValueOverTarget(value?.value ?? null, metric.target, metric.unit)}
+        <StaleBadge value={value} />
       </div>
       <div
         class="scoreboard-progress"
@@ -93,6 +96,7 @@ export function UntargetedMetricRow({ row, timeZone }: RowProps<UntargetedRowMod
       <div class="scoreboard-metric__label">{metric.label}</div>
       <div class="scoreboard-metric__value" title={value ? valueSourceTitle(value, timeZone) : "No value yet"}>
         {value ? formatValue(value.value, metric.unit) : NO_VALUE}
+        <StaleBadge value={value} />
       </div>
       <div class="scoreboard-metric__status">no target set</div>
     </li>

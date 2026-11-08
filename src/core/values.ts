@@ -2,8 +2,12 @@
  * Resolving a metric's value from its source. Pure.
  *
  * Every value carries its source and timestamp (brief › Rules: hovering a
- * value shows both). Ticket 07 adds the tracker branch; until then tracker
- * metrics have no value.
+ * value shows both).
+ *
+ * Tracker values live in the week snapshots: each successful fetch writes
+ * the week values for its window there (ticket 07, `trackerAdapter.ts` via
+ * `snapshotValuePatch`), so the last good value survives restarts and a
+ * failed fetch leaves it in place (shown stale, see sources.ts).
  */
 import { isEnteredPerWeek, type MetricConfig } from "./config";
 import type { ScoreboardData } from "./data";
@@ -15,6 +19,8 @@ export interface MetricValue {
   source: ValueSource;
   /** ISO instant: when it was entered (manual) or fetched (tracker). */
   at: string;
+  /** Set when the source failed on the last refresh: this is the last good value (see sources.ts). */
+  stale?: { error: string; failedAt: string };
 }
 
 /** A single timestamped reading within a week. */
@@ -48,16 +54,25 @@ export function manualLatestValue(data: ScoreboardData, metricId: string): Metri
   return entry ? { value: entry.value, source: "manual", at: entry.enteredAt } : null;
 }
 
+/** A tracker metric's value for an ISO week, as last fetched into the week snapshot. */
+export function trackerWeekValue(data: ScoreboardData, metricId: string, weekKey: string): MetricValue | null {
+  const snapshot = data.snapshots[weekKey];
+  const line = snapshot?.metrics[metricId];
+  if (!snapshot || !line || line.value === null) return null;
+  return { value: line.value, source: "tracker", at: line.fetchedAt ?? snapshot.updatedAt };
+}
+
 /** A per-week metric's value for an ISO week, from whichever source it has. */
 export function metricWeekValue(metric: MetricConfig, data: ScoreboardData, weekKey: string): MetricValue | null {
   if (metric.source.type === "manual") return manualWeekValue(data, metric.id, weekKey);
-  return null; // tracker: ticket 07
+  return trackerWeekValue(data, metric.id, weekKey);
 }
 
 /** A latest-value metric's current value (year metrics, ad-hoc untargeted). */
 export function metricLatestValue(metric: MetricConfig, data: ScoreboardData): MetricValue | null {
   if (metric.source.type === "manual") return manualLatestValue(data, metric.id);
-  return null; // tracker: ticket 07
+  // Tracker year metrics would need a whole-year fetch; none in v1 (the API fetch covers 9 weeks).
+  return null;
 }
 
 /** The value shown now: this week's for per-week metrics, else the latest. */

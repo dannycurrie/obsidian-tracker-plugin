@@ -20,12 +20,12 @@ npm run typecheck  # tsc --noEmit
   - `config.ts` config schema types; `configLoad.ts` YAML text → config with line-numbered problems (`yaml` package).
   - `configValidation.ts` full validation (`validateConfigText`, what the store loads with); `configStatus.ts` the derived validation state (`configValidationState`: features such as export refuse to run while `blocksActions`), orphaned-history warnings, and `SourceProblem` for adapters reporting config problems at runtime via `ScoreboardStore.setSourceProblems`.
   - `data.ts` data file schema (versioned), tolerant reading, and `applyDataPatch` (patch the latest document, touching only patched fields).
-  - `values.ts` metric values from sources; `weeklyScoring.ts` hit rule and This week score; `planCurve.ts` plan curves (linear, quarterly, milestones); `yearScoring.ts` on-pace rule, pace labels and Year to date score; `model.ts` + `rows/` the view model, one row builder per metric kind.
+  - `values.ts` metric values from sources (tracker values are read from week snapshots); `tracker.ts` Tracker API window/URL, response parsing and day-bucket → ISO-week sums; `sources.ts` source status and staleness; `weeklyScoring.ts` hit rule and This week score; `planCurve.ts` plan curves (linear, quarterly, milestones); `yearScoring.ts` on-pace rule, pace labels and Year to date score; `model.ts` + `rows/` the view model, one row builder per metric kind.
   - `snapshots.ts` week snapshots (update while the week runs, freeze after it ends, keep the stored target); `history.ts` 8-week strip and streak from snapshots.
   - `enterValues.ts` Enter values form fields and submission → patch; `format.ts` number/unit copy; `week.ts` ISO weeks.
 - `src/ui/` — Preact components. `ScoreboardApp.tsx` composes one component per section (`Header`, `ConfigBanner`, `GoalCards`, `Projects`, …); `MetricRows.tsx` has one row component per kind.
 - `src/obsidian/` — plugin entry (`main.ts`), the `ItemView`, settings tab, Enter values modal, and vault IO. `ScoreboardStore` (view state, `reload()`, `updateData(patch)`) and `DataFileRepository` (re-read → patch → write if changed) talk to the vault only through the `TextFileIO` port, so they are unit-tested with an in-memory fake.
-- `src/adapters/` — metric sources (tracker), added in later tickets.
+- `src/adapters/` — source adapters (`types.ts` the `SourceAdapter` interface; `trackerAdapter.ts` one Tracker API request per refresh, HTTP injected). The store runs them on every `reload()` before the snapshot step. Manual entry needs no adapter. `src/obsidian/http.ts` (`requestUrl`) and `trackerApiKey.ts` (secret storage, else settings) are the Obsidian edges.
 - `tests/fixtures/` — sample config and test helpers. `examples/scoreboard.yaml` is a full 11-metric config for manual testing: copy it to the config path in settings.
 
 ## Install into a vault

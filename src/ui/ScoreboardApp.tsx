@@ -1,6 +1,7 @@
 import { DEFAULT_TIMEZONE } from "../core/config";
 import { configValidationState } from "../core/configStatus";
 import { buildScoreboardModel } from "../core/model";
+import { modelWithSourceStatus, sourceErrorLines } from "../core/sources";
 import { isoWeekOf, type CalendarDate } from "../core/week";
 import type { ScoreboardState } from "../core/viewState";
 import { ConfigBanner } from "./ConfigBanner";
@@ -25,7 +26,9 @@ export interface ScoreboardAppProps extends HeaderActions {
  * and adding one line here.
  */
 export function ScoreboardApp({ today, state, onRefresh, onEnterValues, projectNotes, onOpenNote }: ScoreboardAppProps) {
-  const model = state.config ? buildScoreboardModel(state.config, state.data, today) : null;
+  const built = state.config ? buildScoreboardModel(state.config, state.data, today) : null;
+  // Failed sources: their values show as stale (last good value and its age), never zero.
+  const model = built ? modelWithSourceStatus(built, state.sources) : null;
   const projects = projectNotes ? buildProjectsModel(projectNotes, state.config?.goals ?? null) : null;
   const timeZone = state.config?.timezone ?? DEFAULT_TIMEZONE;
   const emptyMessage =
@@ -42,6 +45,9 @@ export function ScoreboardApp({ today, state, onRefresh, onEnterValues, projectN
         yearToDate={model?.yearToDate}
         onRefresh={onRefresh}
         onEnterValues={state.config ? onEnterValues : undefined}
+        refreshedAt={state.loadedAt}
+        timeZone={timeZone}
+        sourceErrors={sourceErrorLines(state.sources)}
       />
       <ProjectNotesNeedingFix notes={projects?.malformed ?? []} onOpenNote={onOpenNote} />
       <ConfigBanner validation={configValidationState(state)} dataError={state.dataError} />
