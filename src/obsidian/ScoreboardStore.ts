@@ -4,8 +4,9 @@
  * injected), so it is unit-tested with fakes.
  *
  * Extension points:
- * - `reload()` is what Refresh calls. Ticket 04 (snapshots) and 07 (tracker)
- *   hook in after config + data are loaded; add steps there.
+ * - `reload()` is what Refresh calls. After config + data are loaded it runs
+ *   the week snapshot step (ticket 04, `snapshotStep`); ticket 07 (tracker)
+ *   adds its fetch step before it.
  * - `updateData(patch)` is the only way to write the data file.
  * - `loadConfig` is injectable; ticket 06 can pass its validating loader.
  *   Config rule: a config with no problems becomes the current config; one
@@ -15,6 +16,8 @@
  */
 import { loadConfigFromYaml, type ConfigLoadResult } from "../core/configLoad";
 import type { DataPatch } from "../core/data";
+import { snapshotRefreshPatch } from "../core/snapshots";
+import { calendarDateIn } from "../core/week";
 import { initialScoreboardState, type ScoreboardState } from "../core/viewState";
 import type { DataFileRepository } from "./DataFileRepository";
 import type { TextFileIO } from "./io";
@@ -75,7 +78,27 @@ export class ScoreboardStore {
     } catch (e) {
       next.dataError = (e as Error).message;
     }
+    await this.snapshotStep(next);
     this.set({ ...next, status: "ready", loadedAt: this.deps.now().toISOString() });
+  }
+
+  /**
+   * Week snapshots (ticket 04): records the current week and freezes ended
+   * weeks. Writes only if a value or verdict changed; skipped without a valid
+   * config or a readable data file.
+   */
+  private async snapshotStep(next: Partial<ScoreboardState>): Promise<void> {
+    const config = next.config ?? this.state.config;
+    const valid = next.configValid ?? this.state.configValid;
+    if (!config || !valid || !next.data || next.dataError) return;
+    const now = this.deps.now();
+    const patch = snapshotRefreshPatch(config, next.data, calendarDateIn(now, config.timezone), now.toISOString());
+    if (patch.length === 0) return;
+    try {
+      next.data = (await this.deps.data.update(patch)).data;
+    } catch (e) {
+      next.dataError = (e as Error).message;
+    }
   }
 
   /**

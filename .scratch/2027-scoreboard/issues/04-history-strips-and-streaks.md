@@ -10,10 +10,15 @@ Rules:
 
 **Blocked by:** 02 (A weekly manual metric, end to end)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] 8-week strip renders from week snapshots in the data file and survives a restart
-- [ ] Freezing, frozen targets, missing-week-is-missed, first-data cutoff and streak are pure functions with unit tests
-- [ ] Changing a weekly target in config does not change frozen weeks' verdicts
-- [ ] A refresh that changes nothing does not write the data file
-- [ ] Every write re-reads the data file first and preserves fields it didn't touch (test with a concurrent change)
+- [x] 8-week strip renders from week snapshots in the data file and survives a restart
+- [x] Freezing, frozen targets, missing-week-is-missed, first-data cutoff and streak are pure functions with unit tests
+- [x] Changing a weekly target in config does not change frozen weeks' verdicts
+- [x] A refresh that changes nothing does not write the data file
+- [x] Every write re-reads the data file first and preserves fields it didn't touch (test with a concurrent change)
+
+**Notes:**
+- Pure logic: `src/core/snapshots.ts` (snapshot step `snapshotRefreshPatch`; `snapshotValuePatch` for ticket 07 to rewrite tracker values in frozen weeks without touching target/frozen) and `src/core/history.ts` (strip, first-data cutoff, streak). The store runs the snapshot step at the end of every `reload()` (skipped without a valid config or readable data file).
+- Verified by unit tests (Vitest, in-memory IO): restart, freeze, frozen target vs config change, no-change-no-write, concurrent change preserved. The view-model and SSR render are tested too.
+- Not yet checked by hand in Obsidian (desktop/mobile): strip appearance and spacing at 360 px / 1440 px, hover titles on squares, and that the snapshot file syncs between devices.

@@ -20,6 +20,7 @@ npm run typecheck  # tsc --noEmit
   - `config.ts` config schema types; `configLoad.ts` YAML text → config with line-numbered problems (`yaml` package).
   - `data.ts` data file schema (versioned), tolerant reading, and `applyDataPatch` (patch the latest document, touching only patched fields).
   - `values.ts` metric values from sources; `weeklyScoring.ts` hit rule and This week score; `model.ts` + `rows/` the view model, one row builder per metric kind.
+  - `snapshots.ts` week snapshots (update while the week runs, freeze after it ends, keep the stored target); `history.ts` 8-week strip and streak from snapshots.
   - `enterValues.ts` Enter values form fields and submission → patch; `format.ts` number/unit copy; `week.ts` ISO weeks.
 - `src/ui/` — Preact components. `ScoreboardApp.tsx` composes one component per section (`Header`, `ConfigBanner`, `GoalCards`, `Projects`, …); `MetricRows.tsx` has one row component per kind.
 - `src/obsidian/` — plugin entry (`main.ts`), the `ItemView`, settings tab, Enter values modal, and vault IO. `ScoreboardStore` (view state, `reload()`, `updateData(patch)`) and `DataFileRepository` (re-read → patch → write if changed) talk to the vault only through the `TextFileIO` port, so they are unit-tested with an in-memory fake.

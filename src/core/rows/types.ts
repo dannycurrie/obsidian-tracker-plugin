@@ -5,6 +5,7 @@
  */
 import type { ScoreboardConfig, UntargetedMetricConfig, WeeklyMetricConfig, YearMetricConfig } from "../config";
 import type { ScoreboardData } from "../data";
+import type { HistoryWeek } from "../history";
 import type { MetricValue } from "../values";
 import type { CalendarDate, IsoWeek } from "../week";
 import type { WeeklyStatus } from "../weeklyScoring";
@@ -28,7 +29,10 @@ export interface WeeklyRowModel {
   value: MetricValue | null;
   /** Status for the current week (never "missed": the week is still running). */
   status: WeeklyStatus;
-  // Ticket 04: history strip (last 8 completed weeks) and streak go here.
+  /** The last 8 completed weeks, oldest first; none before the first week with data. */
+  history: HistoryWeek[];
+  /** Consecutive weeks hit, counting back from last week, plus this week if already hit. */
+  streak: number;
 }
 
 /** PLACEHOLDER for ticket 03 (plan curve, pace delta, pace label, staleness). */
