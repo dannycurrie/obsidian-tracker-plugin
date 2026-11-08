@@ -1,0 +1,114 @@
+# Sample 2027 Scoreboard config for manual testing. Copy it to the config
+# path set in the plugin settings (default: 🗺️ Plans/🎯 2027 Plan/scoreboard.yaml).
+#
+# Metric fields:
+#   id        stable key for history; don't rename once data exists
+#   label     display text (safe to change)
+#   kind      weekly | year | untargeted
+#   level     true for readings of a current state (WAU, % migrated)
+#   unit      shown with values: "min", "£", "%", or omit for counts
+#   target    per ISO week (weekly) or by 31 December (year); not for untargeted
+#   plan      year metrics only:
+#               { type: linear, baseline: 0 }
+#               { type: quarterly, baseline: 0, quarters: [Q1, Q2, Q3, Q4] }
+#               { type: milestones, baseline: 0, steps: [{ date: 2027-06-30, value: 1 }, ...] }
+#   paceTolerance  optional per-metric override of the global value
+#   source    { type: manual, cadence: weekly | ad-hoc }
+#             { type: tracker, metric: "<tracker metric id>", aggregate: sum | count }
+year: 2027
+weekStart: monday
+timezone: Europe/London
+paceTolerance: 0.95
+goals:
+  - id: finances
+    name: Finances
+    statement: Build the cushion and shrink the mortgage
+    metrics:
+      - id: vanguard-saved
+        label: Saved in Vanguard
+        kind: year
+        target: 12000
+        unit: "£"
+        plan: { type: linear, baseline: 0 }
+        source: { type: manual }
+      - id: mortgage-overpayment
+        label: Mortgage overpayment
+        kind: year
+        target: 10000
+        unit: "£"
+        plan: { type: linear, baseline: 0 }
+        source: { type: manual }
+  - id: career
+    name: Career
+    statement: Ship platforms people actually use
+    metrics:
+      - id: tengu-wau
+        label: Tengu WAU
+        kind: weekly
+        level: true
+        target: 25
+        source: { type: manual }
+      - id: asl-requests
+        label: Non-telephony inbound requests serviced by ASL
+        kind: year
+        level: true
+        target: 100
+        unit: "%"
+        plan: { type: quarterly, baseline: 0, quarters: [10, 50, 80, 100] }
+        source: { type: manual }
+      - id: react-migration
+        label: Clients migrated to new React platform
+        kind: year
+        level: true
+        target: 100
+        unit: "%"
+        plan: { type: quarterly, baseline: 0, quarters: [10, 50, 80, 100] }
+        source: { type: manual }
+  - id: family
+    name: Family
+    statement: Be present at home
+    metrics:
+      - id: homework-n
+        label: Homework time with N
+        kind: weekly
+        target: 60
+        unit: min
+        source: { type: tracker, metric: "<tracker metric id>", aggregate: sum }
+      - id: time-with-s
+        label: "[x] with S"
+        kind: year
+        target: 12
+        plan: { type: linear, baseline: 0 }
+        source: { type: manual }
+  - id: self
+    name: Self
+    statement: Look after the engine
+    metrics:
+      - id: meditation
+        label: Meditation
+        kind: weekly
+        target: 100
+        unit: min
+        source: { type: tracker, metric: "<tracker metric id>", aggregate: sum }
+      - id: feedback-given
+        label: Feedback given
+        kind: weekly
+        target: 10
+        source: { type: tracker, metric: "<tracker metric id>", aggregate: count }
+  - id: creative
+    name: Creative
+    statement: Put more music out into the world
+    metrics:
+      - id: music-practice
+        label: Music practice, playing, recording
+        kind: weekly
+        target: 60
+        unit: min
+        source: { type: manual }
+      - id: eps
+        label: EPs released
+        kind: year
+        target: 5
+        plan: { type: linear }   # switch to milestones once release dates are set
+        paceTolerance: 0.9
+        source: { type: manual }

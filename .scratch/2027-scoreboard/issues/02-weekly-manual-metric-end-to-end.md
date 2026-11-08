@@ -6,12 +6,16 @@ Manual weekly entry semantics: one total per week (or the latest reading for a l
 
 **Blocked by:** 01 (Plugin shell and empty Scoreboard view)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Goal cards and weekly metric rows render from the config file; UI copy says "target", never "goal", for the number
-- [ ] Enter values form lists only manual metrics; weekly fields are blank with a "last week: N" hint; blank means unchanged; saves in one action
-- [ ] A saved week total replaces any earlier entry for that metric and week, and survives a restart
-- [ ] A level weekly metric uses the latest reading in the week
-- [ ] Row shows "N to go this week" until the target is reached, then "Hit"
-- [ ] *This week* tile = weekly metrics hit so far / number of weekly metrics
-- [ ] Hit rule and This week score are pure functions with unit tests
+- [x] Goal cards and weekly metric rows render from the config file; UI copy says "target", never "goal", for the number (render tests in `src/ui/ScoreboardApp.test.tsx`; not seen inside Obsidian)
+- [x] Enter values form lists only manual metrics; weekly fields are blank with a "last week: N" hint; blank means unchanged; saves in one action (`src/core/enterValues.test.ts`, `src/ui/EnterValuesForm.test.tsx`; the Obsidian modal itself not run)
+- [ ] A saved week total replaces any earlier entry for that metric and week, and survives a restart — replace-and-persist is unit-tested (`data.test.ts`, `DataFileRepository.test.ts`: new repository instance reads the saved file), but a real Obsidian restart was not run (the agent could not launch Obsidian). Verify manually with `examples/scoreboard.yaml`.
+- [x] A level weekly metric uses the latest reading in the week (`combineWeekReadings` in `values.test.ts`; a manual entry replaces the week's earlier one, so it is always the latest reading)
+- [x] Row shows "N to go this week" until the target is reached, then "Hit"
+- [x] *This week* tile = weekly metrics hit so far / number of weekly metrics
+- [x] Hit rule and This week score are pure functions with unit tests (`src/core/weeklyScoring.ts`)
+
+Notes for later tickets:
+- Year fields in the form are already pre-filled and save as the running total (`manual.latest`); ticket 03 only needs to verify and add the year row/score.
+- A minimal config/data problem banner (`src/ui/ConfigBanner.tsx`) lists problems with line numbers; ticket 06 owns full validation and the final banner.

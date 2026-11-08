@@ -38,3 +38,188 @@
   color: var(--text-muted);
   margin: 0;
 }
+
+/* Status colours: blue = on track / hit, orange = behind / missed, grey = neutral.
+   Never colour alone: every status also has words. */
+.scoreboard {
+  --scoreboard-on-track: var(--color-blue);
+  --scoreboard-behind: var(--color-orange);
+  --scoreboard-neutral: var(--text-muted);
+}
+
+/* Header: tiles and actions */
+.scoreboard-header__tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scoreboard-tile {
+  min-width: 120px;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m, 8px);
+  background: var(--background-secondary);
+}
+
+.scoreboard-tile__label,
+.scoreboard-tile__caption {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 0.8em);
+}
+
+.scoreboard-tile__score {
+  font-size: 1.5em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreboard-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Config / data problems banner (ticket 06 refines) */
+.scoreboard-banner {
+  padding: 8px 12px;
+  border: 1px solid var(--scoreboard-behind);
+  border-radius: var(--radius-m, 8px);
+  background: var(--background-secondary);
+}
+
+.scoreboard-banner__line {
+  margin: 0 0 4px;
+}
+
+.scoreboard-banner__list {
+  margin: 0;
+  padding-left: 1.25em;
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller, 0.85em);
+}
+
+/* Goal cards */
+.scoreboard-goals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 12px;
+}
+
+.scoreboard-goal {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m, 8px);
+  background: var(--background-primary-alt);
+}
+
+.scoreboard-goal__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.scoreboard-goal__name {
+  margin: 0;
+  font-size: var(--font-ui-medium, 1em);
+  font-weight: 600;
+}
+
+.scoreboard-goal__statement {
+  margin: 4px 0 8px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small, 0.9em);
+}
+
+.scoreboard-goal__metrics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Metric rows */
+.scoreboard-metric {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.scoreboard-metric__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.scoreboard-metric__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.scoreboard-metric__status {
+  grid-column: 1 / -1;
+  font-size: var(--font-ui-smaller, 0.85em);
+  color: var(--scoreboard-neutral);
+}
+
+.scoreboard-metric.is-on-track .scoreboard-metric__status {
+  color: var(--scoreboard-on-track);
+  font-weight: 600;
+}
+
+.scoreboard-metric.is-behind .scoreboard-metric__status {
+  color: var(--scoreboard-behind);
+  font-weight: 600;
+}
+
+/* Enter values form */
+.scoreboard-enter-values {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scoreboard-enter-values__intro {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.scoreboard-enter-values__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scoreboard-enter-values__field input {
+  width: 100%;
+}
+
+.scoreboard-enter-values__goal {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 0.85em);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.scoreboard-enter-values__hint {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 0.85em);
+}
+
+.scoreboard-enter-values__error {
+  color: var(--text-error);
+  font-size: var(--font-ui-smaller, 0.85em);
+}
+
+.scoreboard-enter-values__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

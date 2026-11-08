@@ -16,10 +16,15 @@ npm run typecheck  # tsc --noEmit
 
 ## Source layout
 
-- `src/core/` — pure domain logic (ISO weeks, settings defaults; later scoring, plan curves, config validation). Never imports `obsidian`. Tests sit next to the code as `*.test.ts`.
-- `src/ui/` — Preact components. `ScoreboardApp.tsx` composes one component per section (`Header`, `GoalCards`, `Projects`, …).
-- `src/obsidian/` — plugin entry (`main.ts`), the `ItemView`, settings tab, and later vault IO.
-- `src/adapters/` — metric sources (manual, tracker), added in later tickets.
+- `src/core/` — pure domain logic. Never imports `obsidian` and never reads the clock (callers pass `today` / timestamps). Tests sit next to the code as `*.test.ts`.
+  - `config.ts` config schema types; `configLoad.ts` YAML text → config with line-numbered problems (`yaml` package).
+  - `data.ts` data file schema (versioned), tolerant reading, and `applyDataPatch` (patch the latest document, touching only patched fields).
+  - `values.ts` metric values from sources; `weeklyScoring.ts` hit rule and This week score; `model.ts` + `rows/` the view model, one row builder per metric kind.
+  - `enterValues.ts` Enter values form fields and submission → patch; `format.ts` number/unit copy; `week.ts` ISO weeks.
+- `src/ui/` — Preact components. `ScoreboardApp.tsx` composes one component per section (`Header`, `ConfigBanner`, `GoalCards`, `Projects`, …); `MetricRows.tsx` has one row component per kind.
+- `src/obsidian/` — plugin entry (`main.ts`), the `ItemView`, settings tab, Enter values modal, and vault IO. `ScoreboardStore` (view state, `reload()`, `updateData(patch)`) and `DataFileRepository` (re-read → patch → write if changed) talk to the vault only through the `TextFileIO` port, so they are unit-tested with an in-memory fake.
+- `src/adapters/` — metric sources (tracker), added in later tickets.
+- `tests/fixtures/` — sample config and test helpers. `examples/scoreboard.yaml` is a full 11-metric config for manual testing: copy it to the config path in settings.
 
 ## Install into a vault
 
